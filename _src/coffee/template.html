@@ -223,8 +223,14 @@ const S = { me: null, st: null, cart: [], cartPid: null, tab: null, rep: null, p
 
 async function api(a, d) {
   if (!CFG.SHEET_URL) throw new Error('nosheet');
-  const r = await fetch(CFG.SHEET_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ a: a, key: KEY }, d || {})) });
-  return r.json();
+  const body = JSON.stringify(Object.assign({ a: a, key: KEY }, d || {}));
+  try {
+    const r = await fetch(CFG.SHEET_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: body });
+    return await r.json();
+  } catch (e) {  // 회사망 등에서 POST가 막히면 같은 요청을 GET으로 한 번 더
+    const r = await fetch(CFG.SHEET_URL + '?q=' + encodeURIComponent(body) + '&t=' + Date.now());
+    return r.json();
+  }
 }
 function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2600); }
 function fail(r) { const m = (ERR[(r && r.error) || 'net'] || ERR.net) + (r && r.msg ? ' (' + r.msg + ')' : ''); toast(m); if (r && r.error === 'auth') { S.me = null; boot(); } }
