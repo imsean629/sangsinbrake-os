@@ -20,7 +20,7 @@
  * 개인정보: PORTAL ID·이름만 받습니다. PORTAL ID와 기기 키는 앱으로 내보내지 않습니다(주문서·정산·랭킹엔 이름만).
  * 기기 키는 해시(SHA-256)로만 저장합니다. 송금은 토스 아이디·카카오페이 송금 링크만(계좌번호 저장 안 함).
  */
-const SHEET_ID = '';            // 비워 두면 이 스크립트가 붙어 있는 시트를 사용
+const SHEET_ID = '';            // 시트 ID(주소의 /d/ 와 /edit 사이). 시트에서 바로 연 스크립트면 비워 둬도 됨
 const ADMIN_PIN = '';           // ← 관리자 PIN을 넣으세요 (6자 이상). 비어 있으면 관리자 화면이 잠깁니다.
 const TZ = 'Asia/Seoul';
 
@@ -42,7 +42,10 @@ const DEFAULT_MENU = [
 const OPEN = '모집', LOCKED = '확정', ORDERED = '주문완료', DONE = '정산완료', CANCEL = '취소';
 
 /* ---------- 시트 공통 ---------- */
-function book_() { return SHEET_ID ? SpreadsheetApp.openById(SHEET_ID) : SpreadsheetApp.getActiveSpreadsheet(); }
+function book_() {  // 시트 주소 전체를 넣어도 ID만 뽑아 씀
+  const id = (String(SHEET_ID).match(/\/d\/([\w-]{20,})/) || [0, String(SHEET_ID).trim()])[1];
+  return id ? SpreadsheetApp.openById(id) : SpreadsheetApp.getActiveSpreadsheet();
+}
 function sheet_(k) {
   const t = T[k], ss = book_();
   let sh = ss.getSheetByName(t.name);
