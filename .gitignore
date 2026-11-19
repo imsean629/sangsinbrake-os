@@ -1,3 +1,4 @@
 _src/coffee/out/
 _src/coffee/shots/
 node_modules/
+__pycache__/
