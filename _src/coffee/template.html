@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1C120D">
+<meta name="robots" content="noindex">
+<title>SB COFFEE RUN · 커피팟</title>
+<meta property="og:title" content="SB COFFEE RUN">
+<meta property="og:description" content="오늘 커피, 누가 모아? 묻고, 받고, 정산까지 한 번에.">
+<meta property="og:image" content="__URL__og.png">
+<link rel="icon" href="__ICON__">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --bean:#1C120D; --roast:#2A1C15; --steam:#3B2A21; --line:#4A372C;
+  --crema:#F3E5CF; --foam:#BCA58C; --dim:#8C7563;
+  --red:#E8333B; --blue:#3E6BE0; --blue-d:#2F56BF; --gold:#F2B544; --gold-d:#C98A12;
+  --kakao:#FEE500; --ok:#5CC28A;
+  --r-lg:22px; --r-md:14px; --r-sm:10px;
+  --f:"Pretendard Variable",Pretendard,"Noto Sans CJK KR","Noto Sans KR","Apple SD Gothic Neo",sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bean);color:var(--crema);font-family:var(--f);font-size:16px;line-height:1.55;letter-spacing:-.01em}
+body{min-height:100vh;min-height:100dvh;word-break:keep-all;overflow-wrap:anywhere}
+button,input,select{font:inherit;color:inherit;letter-spacing:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:6px}
+.wrap{max-width:440px;margin:0 auto;padding:0 20px calc(110px + env(safe-area-inset-bottom))}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+/* 상단 */
+.top{display:flex;align-items:center;justify-content:space-between;padding:16px 0 8px}
+.logo{display:inline-flex;align-items:center;background:#fff;border-radius:999px;padding:7px 14px 7px 12px}
+.logo img{height:15px;display:block}
+.chip{font-size:14px;color:var(--foam);border:1px solid var(--line);border-radius:999px;padding:6px 12px;display:inline-flex;gap:6px;align-items:center}
+.chip b{color:var(--crema);font-weight:700}
+
+h1{font-size:30px;line-height:1.2;font-weight:800;letter-spacing:-.04em;margin:22px 0 6px}
+h2{font-size:20px;line-height:1.3;font-weight:800;letter-spacing:-.03em;margin:28px 0 12px}
+p.sub{color:var(--foam);margin:0 0 18px;font-size:15px}
+.muted{color:var(--dim);font-size:14px}
+
+/* 버튼 */
+.btn{text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:54px;border-radius:var(--r-md);font-weight:700;font-size:16px;background:var(--blue);color:#fff;padding:0 18px;transition:transform .08s}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--crema)}
+.btn.red{background:var(--red)}
+.btn.kakao{background:var(--kakao);color:#191600}
+.btn.toss{background:#0064FF}
+.btn.gold{background:var(--gold);color:#2A1A00}
+.btn.sm{min-height:42px;font-size:14px;width:auto;border-radius:var(--r-sm)}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+.dock{position:fixed;left:0;right:0;bottom:0;padding:12px 20px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(to top,var(--bean) 70%,rgba(28,18,13,0))}
+.dock>div{max-width:400px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+
+/* 입력 */
+label.f{display:block;margin:0 0 14px}
+label.f span{display:block;font-size:14px;color:var(--foam);margin-bottom:6px}
+.in{width:100%;height:52px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--roast);padding:0 14px;font-size:16px;outline:none}
+.in:focus{border-color:var(--foam)}
+.hint{font-size:13px;color:var(--dim);margin-top:6px}
+.pick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.pick button{border:1px solid var(--line);border-radius:999px;padding:9px 16px;font-size:15px;color:var(--foam)}
+.pick button[aria-pressed=true]{background:var(--crema);color:var(--bean);border-color:var(--crema);font-weight:700}
+
+/* 컵 게이지 — 이 앱의 얼굴 */
+.cup{position:relative;width:var(--w,120px);aspect-ratio:.78;flex:none}
+.cup .glass{position:absolute;inset:0;border:2.5px solid var(--crema);border-top:0;border-radius:6px 6px calc(var(--w,120px)*.32) calc(var(--w,120px)*.32);overflow:hidden;clip-path:polygon(0 0,100% 0,92% 100%,8% 100%);background:rgba(243,229,207,.04)}
+.cup .liquid{position:absolute;left:0;right:0;bottom:0;height:var(--fill,0%);background:linear-gradient(to top,#5A3220,#8A5232 70%,#C99A6B 92%,#EBD3AE);transition:height .9s cubic-bezier(.2,.8,.2,1)}
+.cup .liquid::after{content:"";position:absolute;left:0;right:0;top:0;height:5px;background:#F6E7CD;opacity:.85}
+.cup.full .liquid{background:linear-gradient(to top,#4A2817,#7A4428 60%,#B07A4C 90%,#F3DDB8)}
+.cup.bell .liquid{background:linear-gradient(to top,#B7740A,var(--gold) 70%,#FFE29A)}
+.cup .minline{position:absolute;left:-6px;right:-6px;top:22%;border-top:1.5px dashed var(--foam)}
+.cup .rim{position:absolute;left:-5%;right:-5%;top:-3px;height:5px;border-radius:3px;background:var(--crema)}
+.cup .lid{position:absolute;inset:auto 0 100% 0;height:0}
+
+/* 팟 목록 */
+.pot{display:flex;gap:16px;align-items:center;width:100%;text-align:left;padding:16px;border-radius:var(--r-lg);background:var(--roast);margin-bottom:12px;border:1px solid transparent}
+.pot.belled{border-color:var(--gold)}
+.pot .who{font-weight:800;font-size:18px;letter-spacing:-.03em}
+.pot .meta{font-size:13px;color:var(--foam)}
+.pot .amt{font-size:15px;margin-top:6px}
+.pot .amt b{font-size:18px}
+.tag{display:inline-block;font-size:12px;font-weight:700;border-radius:6px;padding:2px 7px;background:var(--steam);color:var(--foam);margin-right:4px}
+.tag.live{background:var(--red);color:#fff}
+.tag.gold{background:var(--gold);color:#2A1A00}
+.tag.ok{background:var(--ok);color:#0E2A1A}
+.empty{border:1.5px dashed var(--line);border-radius:var(--r-lg);padding:28px 20px;text-align:center;color:var(--foam)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.tile{background:var(--roast);border-radius:var(--r-md);padding:16px;text-align:left;min-height:92px;display:flex;flex-direction:column;justify-content:space-between}
+.tile b{font-size:16px}
+.tile span{font-size:13px;color:var(--foam)}
+
+/* 팟 상세 */
+.hero{display:flex;gap:22px;align-items:flex-end;margin:18px 0 10px}
+.hero .big{font-size:40px;font-weight:800;letter-spacing:-.05em;line-height:1}
+.hero .of{color:var(--foam);font-size:14px;margin-top:6px}
+.clock{font-size:15px;color:var(--foam)}
+.clock b{color:var(--crema);font-weight:800}
+.clock.late b{color:var(--red)}
+.memo{background:var(--roast);border-radius:var(--r-sm);padding:10px 14px;font-size:14px;color:var(--foam);margin:12px 0}
+.ol{list-style:none;margin:0;padding:0}
+.ol li{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--steam)}
+.ol li:last-child{border-bottom:0}
+.ol .nm{width:76px;flex:none;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ol .it{flex:1;font-size:14px;color:var(--foam)}
+.ol .it em{font-style:normal;color:var(--dim)}
+.ol .won{font-weight:700;text-align:right;white-space:nowrap}
+.ol li.mine .nm{color:var(--gold)}
+.bellbtn{width:100%;margin:22px 0 4px;border-radius:var(--r-lg);border:1.5px solid var(--gold);color:var(--gold);padding:16px;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:800;font-size:17px}
+.bellbtn svg{width:22px;height:22px}
+.banner{border-radius:var(--r-lg);background:var(--gold);color:#2A1A00;padding:16px 18px;margin:14px 0;font-weight:700}
+.banner small{display:block;font-weight:500;opacity:.8}
+.alert{border-radius:var(--r-md);background:rgba(232,51,59,.14);border:1px solid var(--red);padding:14px 16px;margin:12px 0;font-size:15px}
+.alert b{color:#FF8A8F}
+.alert ul{margin:8px 0 0;padding-left:18px;color:var(--foam);font-size:14px}
+.sheetlist{background:var(--roast);border-radius:var(--r-md);padding:14px 16px;margin:12px 0}
+.sheetlist .l{display:flex;justify-content:space-between;padding:6px 0;font-size:15px}
+.sheetlist .l b{font-variant-numeric:tabular-nums}
+.sheetlist .sum{border-top:1px solid var(--line);margin-top:8px;padding-top:10px;font-weight:800}
+
+/* 정산 */
+.owe{background:var(--roast);border-radius:var(--r-lg);padding:20px;margin:14px 0}
+.owe .amount{font-size:36px;font-weight:800;letter-spacing:-.05em}
+.owe .to{color:var(--foam);font-size:14px;margin-bottom:14px}
+.check{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--steam)}
+.toggle{border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13px;color:var(--foam)}
+.toggle[aria-pressed=true]{background:var(--ok);border-color:var(--ok);color:#0E2A1A;font-weight:700}
+
+/* 바텀시트 */
+.scrim{position:fixed;inset:0;background:rgba(10,6,4,.6);display:none;z-index:20}
+.scrim.on{display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:88vh;max-height:88dvh;overflow:auto;background:var(--bean);border-radius:24px 24px 0 0;border-top:1px solid var(--line);z-index:21;transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);padding:10px 20px calc(20px + env(safe-area-inset-bottom))}
+.sheet.on{transform:none}
+.sheet .grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 6px}
+.sheet>div{max-width:400px;margin:0 auto}
+.sheet h2{margin-top:12px}
+.tabs{display:flex;gap:6px;overflow:auto;margin:0 -20px 10px;padding:0 20px}
+.tabs button{flex:none;border-radius:999px;padding:8px 14px;font-size:14px;border:1px solid var(--line);color:var(--foam)}
+.tabs button[aria-selected=true]{background:var(--crema);color:var(--bean);font-weight:700;border-color:var(--crema)}
+.mi{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--steam)}
+.mi .n{font-weight:600}
+.mi .p{font-size:14px;color:var(--foam)}
+.plus{width:38px;height:38px;border-radius:50%;background:var(--crema);color:var(--bean);font-size:22px;font-weight:700;line-height:38px;text-align:center;flex:none}
+.cart{background:var(--roast);border-radius:var(--r-md);padding:4px 14px;margin:14px 0}
+.cl{padding:12px 0;border-bottom:1px solid var(--steam)}
+.cl:last-child{border-bottom:0}
+.cl .t{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.step{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px}
+.step button{width:34px;height:32px;font-size:18px}
+.step span{min-width:22px;text-align:center;font-weight:700}
+.cl input{margin-top:8px;height:40px;font-size:14px}
+
+/* 결과 카드 */
+.cardwrap{position:fixed;inset:0;z-index:30;background:rgba(10,6,4,.86);display:none;overflow:auto;padding:24px 20px}
+.cardwrap.on{display:block}
+.cardwrap>div{max-width:360px;margin:0 auto}
+.rc{width:320px;height:420px;margin:0 auto;border-radius:24px;background:var(--roast);position:relative;overflow:hidden;padding:24px;display:flex;flex-direction:column;color:var(--crema)}
+.rc.goldc{background:linear-gradient(160deg,#F7C65A,#E59F1C);color:#2A1A00}
+.rc .lg{align-self:flex-start;background:#fff;border-radius:999px;padding:6px 12px}
+.rc .lg img{height:12px;display:block}
+.rc .d{margin-top:18px;font-size:13px;opacity:.75}
+.rc .k{font-size:14px;margin-top:2px;font-weight:600}
+.rc .m{font-size:27px;font-weight:800;letter-spacing:-.04em;line-height:1.2;margin-top:10px;word-break:keep-all}
+.rc .f{max-width:62%;margin-top:auto;font-size:15px;line-height:1.5;word-break:keep-all}
+.rc .f small{display:block;font-size:12px;opacity:.7;margin-bottom:4px}
+.rc .ft{margin-top:16px;display:flex;justify-content:space-between;font-size:12px;opacity:.7;font-weight:700;letter-spacing:.02em}
+.rc .bigcup{position:absolute;right:22px;bottom:64px}
+.rc.goldc .bigcup .glass,.rc.goldc .bigcup .rim{border-color:#2A1A00}.rc.goldc .bigcup .rim{background:#2A1A00}.rc.goldc .bigcup .minline{border-color:#6B4A10}
+.rc .stat{display:flex;gap:16px;margin-top:14px}
+.rc .stat div{font-size:12px;opacity:.75}
+.rc .stat b{display:block;font-size:20px;opacity:1;font-weight:800}
+.cardimg{width:320px;display:block;margin:0 auto;border-radius:24px}
+
+/* 리포트·랭킹 */
+.rep{display:flex;gap:18px;align-items:flex-end;margin:16px 0}
+.rep .big{font-size:56px;font-weight:800;letter-spacing:-.05em;line-height:1}
+.title-badge{display:inline-block;background:var(--crema);color:var(--bean);font-weight:800;border-radius:8px;padding:4px 10px;font-size:15px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.grid div{background:var(--roast);border-radius:var(--r-md);padding:14px}
+.grid span{display:block;font-size:13px;color:var(--foam)}
+.grid b{font-size:20px;letter-spacing:-.03em}
+.rank{list-style:none;margin:0;padding:0;counter-reset:r}
+.rank li{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--steam)}
+.rank .no{width:28px;font-weight:800;font-size:18px;color:var(--foam)}
+.rank li:first-child .no{color:var(--gold)}
+.rank .nm{flex:1;font-weight:700}
+
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translateX(-50%) translateY(-20px);background:var(--crema);color:var(--bean);font-weight:700;border-radius:999px;padding:10px 18px;font-size:14px;opacity:0;transition:.25s;z-index:40;pointer-events:none;max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.back{display:inline-flex;align-items:center;gap:4px;color:var(--foam);font-size:15px;padding:8px 0}
+.adm li{display:block}
+.adm .a{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.preview{background:var(--red);color:#fff;text-align:center;font-size:12px;padding:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="pv"></div>
+<main class="wrap" id="app" aria-live="polite"></main>
+<div class="scrim" id="scrim"></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true"><div class="grab"></div><div id="sheetBody"></div></section>
+<div class="cardwrap" id="cardwrap" role="dialog" aria-modal="true"><div id="cardBody"></div></div>
+<div class="toast" id="toast" role="status"></div>
+<script>/*__H2C__*/</script>
+<script>
+const CFG = { SHEET_URL: "", APP: "__APP__" };
+const FORTUNES = /*__FORTUNES__*/null, TITLES = /*__TITLES__*/null, BELL_BADGE = /*__BELL_BADGE__*/null, ERR = /*__ERR__*/null;
+const LOGO = "__LOGO__";
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const won = n => (Number(n) || 0).toLocaleString('ko-KR') + '원';
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }, del(k) { try { localStorage.removeItem(k); } catch (e) {} } };
+const BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
+
+let KEY = store.get('sbc_key');
+if (!KEY) { const a = new Uint8Array(24); crypto.getRandomValues(a); KEY = Array.from(a, b => 'abcdefghijklmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ0123456789'[b % 60]).join('') + Date.now().toString(36); store.set('sbc_key', KEY); }
+const S = { me: null, st: null, cart: [], cartPid: null, tab: null, rep: null, pin: '', adm: null, busy: false, offset: 0 };
+
+async function api(a, d) {
+  if (!CFG.SHEET_URL) throw new Error('nosheet');
+  const r = await fetch(CFG.SHEET_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ a: a, key: KEY }, d || {})) });
+  return r.json();
+}
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2600); }
+function fail(r) { const m = ERR[(r && r.error) || 'net'] || ERR.net; toast(m); if (r && r.error === 'auth') { S.me = null; boot(); } }
+async function run(a, d, ok) {
+  if (S.busy) return; S.busy = true;
+  try { const r = await api(a, d); if (r.ok === false) { if (r.error !== 'min') fail(r); return r; } if (r.pots) setState(r); if (ok) ok(r); return r; }
+  catch (e) { toast(ERR.net); } finally { S.busy = false; }
+}
+function setState(r) { S.st = r; S.me = r.me; S.offset = (r.now || Date.now()) - Date.now(); }
+const now = () => Date.now() + S.offset;
+function hash(s) { let h = 2166136261; for (const c of String(s)) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+const fortune = () => FORTUNES[hash((S.st ? S.st.today : '') + '|' + (S.me ? S.me.name : '')) % FORTUNES.length];
+const left = dl => { const s = Math.max(0, Math.floor((dl - now()) / 1000)); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+function cup(p, w) {
+  const fill = p.min ? Math.min(100, Math.round(p.total / p.min * 78)) : (p.total ? 78 : 0);
+  const pct = p.total >= p.min ? Math.min(96, 78 + Math.round((p.total - p.min) / Math.max(p.min, 1) * 18)) : fill;
+  return `<div class="cup ${p.bell ? 'bell' : ''} ${p.total >= p.min ? 'full' : ''}" style="--w:${w}px;--fill:${pct}%"><div class="glass"><div class="liquid"></div></div><div class="minline" title="최소주문"></div><div class="rim"></div></div>`;
+}
+function itemsText(items) { return items.map(x => esc(x.n) + (x.o ? ` <em>(${esc(x.o)})</em>` : '') + (x.q > 1 ? ` ×${x.q}` : '')).join(', '); }
+function statusTag(p) {
+  if (p.status === '모집') return p.expired ? '<span class="tag">마감 시간 지남</span>' : '<span class="tag live">모집 중</span>';
+  if (p.status === '확정') return '<span class="tag">주문 준비</span>';
+  if (p.status === '주문완료') return '<span class="tag">정산 중</span>';
+  return '<span class="tag ok">정산 끝</span>';
+}
+
+/* ---------- 화면 ---------- */
+function topBar() {
+  return `<header class="top"><span class="logo"><img src="${LOGO}" alt="SANGSIN BRAKE"></span>${S.me && S.me.status === '승인' ? `<button class="chip" id="myBtn" aria-label="내 정보와 송금 수단"><b>${esc(S.me.name)}</b> 내 정보</button>` : ''}</header>`;
+}
+function render() {
+  const h = location.hash;
+  if (h.startsWith('#admin')) return adminView();
+  if (!S.me || S.me.status !== '승인') return gateView();
+  if (h.startsWith('#pot=')) return potView(decodeURIComponent(h.slice(5)));
+  if (h === '#report') return reportView();
+  if (h === '#hall') return hallView();
+  homeView();
+}
+function gateView() {
+  const st = S.me && S.me.status;
+  let body;
+  if (st === '대기') body = `<h1>승인 대기 중 ☕</h1><p class="sub">${esc(S.me.name)}님의 입장 신청을 받았어요. 관리자가 확인하면 바로 들어갈 수 있어요.</p>
+    <div class="dock"><div><button class="btn" id="recheck">다시 확인하기</button></div></div>`;
+  else if (st === '거절' || st === '차단' || st === '교체됨') body = `<h1>입장이 승인되지 않았어요</h1><p class="sub">정보가 맞는지 확인하고 다시 신청하거나 관리자에게 문의해 주세요.</p>
+    <div class="dock"><div><button class="btn" id="reapply">다시 신청하기</button></div></div>`;
+  else body = `<h1>오늘 커피,<br>누가 모아?</h1><p class="sub">묻고, 받고, 정산까지 한 번에.</p>
+    <div style="margin:26px 0 22px">${cup({ total: 7400, min: 9900 }, 110)}</div>
+    <form id="joinF"><label class="f"><span>PORTAL ID</span><input class="in" id="jp" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="30" required></label>
+    <label class="f"><span>이름</span><input class="in" id="jn" autocomplete="name" maxlength="12" required></label>
+    <p class="hint">관리자가 확인한 뒤에 입장할 수 있어요. 주문서에는 이름만 보여요.</p>
+    <div class="dock"><div><button class="btn" type="submit">입장 신청</button></div></div></form>`;
+  $('#app').innerHTML = topBar() + body;
+  const f = $('#joinF');
+  if (f) f.onsubmit = async e => {
+    e.preventDefault();
+    const r = await run('join', { portal: $('#jp').value.trim(), name: $('#jn').value.trim() });
+    if (r && r.ok) { S.me = r.me; if (r.me.status === '승인') boot(); else render(); }
+  };
+  if ($('#recheck')) $('#recheck').onclick = () => boot(true);
+  if ($('#reapply')) $('#reapply').onclick = () => { store.del('sbc_key'); location.reload(); };
+}
+
+function homeView() {
+  const st = S.st, pots = st.pots;
+  const list = pots.length ? pots.map(p => `
+    <button class="pot ${p.bell ? 'belled' : ''}" data-pid="${esc(p.pid)}">
+      ${cup(p, 58)}
+      <div style="flex:1;min-width:0">
+        <div>${statusTag(p)}${p.bell ? '<span class="tag gold">골든벨</span>' : ''}</div>
+        <div class="who">${esc(p.owner)}의 팟</div>
+        <div class="meta">${esc(p.cafe)} · ${p.cups}잔${p.status === '모집' && !p.expired ? ` · 마감 <span class="num" data-dl="${p.deadline}">${left(p.deadline)}</span>` : ''}</div>
+        ${p.bell ? `<div class="amt">🔔 오늘은 <b>${esc(p.bell)}</b>님이 쏩니다</div>` : `<div class="amt num"><b>${won(p.total)}</b> <span class="muted">/ 최소 ${won(p.min)}</span></div>`}
+      </div>
+    </button>`).join('') : `<div class="empty">아직 열린 팟이 없어요.<br>첫 번째 주인이 되어 볼까요?</div>`;
+  $('#app').innerHTML = topBar() + `<h1>${esc(S.me.name)}님,<br>오늘도 한 잔?</h1>
+    <h2>지금 열린 커피팟</h2>${list}
+    <div class="tiles"><button class="tile" id="toRep"><b>나의 커피 리포트</b><span>이번 달 몇 잔 마셨지?</span></button>
+    <button class="tile" id="toHall"><b>🔔 골든벨 명예의 전당</b><span>이달의 물주는 누구</span></button></div>
+    <div class="dock"><div><button class="btn" id="openBtn">+ 팟 열기</button></div></div>`;
+  document.querySelectorAll('.pot').forEach(b => b.onclick = () => go('#pot=' + encodeURIComponent(b.dataset.pid)));
+  $('#openBtn').onclick = openSheet; $('#toRep').onclick = () => go('#report'); $('#toHall').onclick = () => go('#hall');
+  bindTop();
+}
+
+function potView(pid) {
+  const p = S.st.pots.find(x => x.pid === pid);
+  if (!p) { $('#app').innerHTML = topBar() + `<button class="back" id="bk">← 홈</button><div class="empty">이 팟을 찾을 수 없어요. 취소됐거나 지난 팟이에요.</div>`; $('#bk').onclick = () => go(''); return; }
+  const open = p.status === '모집', canOrder = open && !p.expired, short = Math.max(0, p.min - p.total);
+  let h = topBar() + `<button class="back" id="bk">← 홈</button>
+    <div>${statusTag(p)}${p.bell ? '<span class="tag gold">골든벨</span>' : ''}</div>
+    <h1 style="margin-top:8px">${esc(p.owner)}의 팟</h1>
+    <div class="clock ${p.expired ? 'late' : ''}">${esc(p.cafe)}${open ? ` · ${p.expired ? '<b>마감 시간 지남</b>' : `<b class="num" data-dl="${p.deadline}">${left(p.deadline)}</b> 남음`}` : ''}</div>
+    <div class="hero">${cup(p, 104)}<div><div class="big num">${won(p.total)}</div>
+      <div class="of">${p.total >= p.min ? '최소주문 달성! 🎉' : `최소주문 ${won(p.min)}까지 <b class="num">${won(short)}</b>`}<br>${p.orders.length}명 · ${p.cups}잔</div></div></div>
+    ${p.memo ? `<div class="memo">📍 ${esc(p.memo)}</div>` : ''}
+    ${p.bell ? `<div class="banner">🔔 골든벨! ${esc(p.bell)}님이 쏩니다<small>오늘 커피는 공짜예요 ☕${p.bellMine && open ? ' · 마감 전까지만 취소할 수 있어요' : ''}</small></div>` : ''}`;
+  if (p.status !== '모집' && p.status !== '확정') h += settleBlock(p);
+  if (p.status === '확정' && p.isOwner) h += orderSheet(p, true);
+  h += `<h2>주문 목록</h2>` + (p.orders.length ? `<ul class="ol">${p.orders.map(o => `<li class="${o.mine ? 'mine' : ''}"><span class="nm">${esc(o.name)}</span><span class="it">${itemsText(o.items)}</span><span class="won num">${won(o.amount)}</span></li>`).join('')}</ul>` : `<div class="empty">아직 아무도 안 담았어요.<br>첫 잔을 담아 보세요.</div>`);
+  if (open && !p.bell) h += `<button class="bellbtn" id="bellOn">${BELL} SB 골든벨 울리기</button>`;
+  if (open && p.bellMine) h += `<button class="btn ghost sm" style="width:100%;margin-top:12px" id="bellOff">골든벨 취소</button>`;
+  if (p.isOwner && open) h += `<div id="minAlert"></div><div class="row" style="margin-top:14px"><button class="btn ghost sm" id="ext">마감 10분 연장</button><button class="btn ghost sm" id="cancelPot">팟 취소</button></div>`;
+  // 하단 버튼
+  let dock = '';
+  if (canOrder) dock += `<button class="btn" id="orderBtn">${p.myItems.length ? '내 주문 바꾸기' : '메뉴 담기'}</button>`;
+  if (open) dock += `<button class="btn ghost" id="share">팟 링크 공유</button>`;
+  if (p.isOwner && open) dock = `<button class="btn red" id="closeBtn">마감하고 주문 확정</button>` + dock;
+  if (p.isOwner && p.status === '확정') dock = `<button class="btn" id="orderedBtn">주문했어요 → 정산 시작</button>`;
+  if (p.isOwner && p.status === '주문완료') dock = `<button class="btn ghost" id="finishBtn">정산 끝내기</button>`;
+  if (p.myItems.length && !open) dock += `<button class="btn ghost" id="myCard">내 주문 카드 보기</button>`;
+  if (dock) h += `<div class="dock"><div>${dock}</div></div>`;
+  $('#app').innerHTML = h;
+  bindTop();
+  $('#bk').onclick = () => go('');
+  const on = (id, f) => { const e = $('#' + id); if (e) e.onclick = f; };
+  on('orderBtn', () => menuSheet(p));
+  on('share', () => sharePot(p));
+  on('bellOn', () => confirmBell(p));
+  on('bellOff', () => run('bell', { pid: p.pid, on: false }, () => { toast('골든벨을 취소했어요.'); render(); }));
+  on('ext', () => run('extend', { pid: p.pid, mins: 10 }, () => { toast('마감을 10분 늘렸어요.'); render(); }));
+  on('cancelPot', () => { if (confirm('이 팟을 취소할까요? 담긴 주문도 함께 사라져요.')) run('cancel', { pid: p.pid }, () => { toast('팟을 취소했어요.'); go(''); }); });
+  on('closeBtn', async () => {
+    const r = await run('close', { pid: p.pid });
+    if (r && r.error === 'min') {
+      $('#minAlert').innerHTML = `<div class="alert"><b class="num">${won(r.short)}이 모자라요.</b> ${esc(p.cafe.split(' ')[0])} 최소주문은 ${won(r.min)}이에요.<ul><li>한 잔 더 담거나 사이즈업·샷 추가로 채워 보세요.</li><li>같이 마실 사람을 불러 보세요.</li><li>시간이 모자라면 마감을 연장해 주세요.</li></ul></div>`;
+      $('#minAlert').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else if (r && r.ok !== false) { toast('주문서가 준비됐어요. 카페에 그대로 읽어 주세요.'); render(); }
+  });
+  on('orderedBtn', () => run('ordered', { pid: p.pid }, () => { toast('정산을 시작했어요.'); render(); }));
+  on('finishBtn', () => { if (confirm('아직 확인 안 된 송금이 있어도 정산을 끝낼까요?')) run('finish', { pid: p.pid }, () => { toast('정산 끝! 수고했어요 ☕'); render(); }); });
+  on('copyOrder', () => copy(orderText(p), '주문서를 복사했어요.'));
+  on('myCard', () => showCard(p));
+  document.querySelectorAll('[data-sent]').forEach(b => b.onclick = () => run('sent', { pid: p.pid, on: b.getAttribute('aria-pressed') !== 'true' }, () => render()));
+  document.querySelectorAll('[data-conf]').forEach(b => b.onclick = () => run('confirm', { pid: p.pid, id: b.dataset.conf, on: b.getAttribute('aria-pressed') !== 'true' }, () => render()));
+  document.querySelectorAll('[data-copy]').forEach(b => b.onclick = () => copy(b.dataset.copy, '금액을 복사했어요.'));
+}
+function summary(p) {
+  const m = {};
+  p.orders.forEach(o => o.items.forEach(x => { const k = (x.c ? '[직접] ' : '') + x.n + (x.o ? ` (${x.o})` : ''); m[k] = (m[k] || { q: 0, w: 0 }); m[k].q += x.q; m[k].w += x.p * x.q; }));
+  return m;
+}
+function orderText(p) {
+  const m = summary(p);
+  return `[${p.cafe}] 주문\n` + Object.keys(m).map(k => `${k} ×${m[k].q}`).join('\n') + `\n총 ${p.cups}잔 ${won(p.total)}`;
+}
+function orderSheet(p, btn) {
+  const m = summary(p);
+  return `<h2>카페에 읽어 줄 주문서</h2><div class="sheetlist">${Object.keys(m).map(k => `<div class="l"><span>${esc(k)}</span><b>×${m[k].q}</b></div>`).join('')}
+    <div class="l sum"><span>총 ${p.cups}잔</span><b>${won(p.total)}</b></div></div>${btn ? '<button class="btn ghost sm" style="width:100%" id="copyOrder">주문서 복사</button>' : ''}`;
+}
+function settleBlock(p) {
+  let h = '<h2>정산</h2>';
+  if (p.status === '정산완료') return h + `<div class="owe"><div class="amount">정산 끝!</div><div class="to">수고했어요, ${esc(p.owner)}님 ☕</div></div>`;
+  if (p.isOwner) {
+    const rows = [];
+    if (p.bellPay) rows.push(`<div class="check"><span><b>${esc(p.bellPay.name)}</b> <span class="muted">골든벨 ${won(p.bellPay.amount)}${p.bellPay.sent ? ' · 보냈대요' : ''}</span></span><button class="toggle" data-conf="bell" aria-pressed="${p.bellPay.ok}">${p.bellPay.ok ? '입금 확인' : '확인 전'}</button></div>`);
+    else if (!p.bell) p.orders.filter(o => !o.mine).forEach(o => rows.push(`<div class="check"><span><b>${esc(o.name)}</b> <span class="muted num">${won(o.amount)}${o.sent ? ' · 보냈대요' : ''}</span></span><button class="toggle" data-conf="${esc(o.id)}" aria-pressed="${o.ok}">${o.ok ? '입금 확인' : '확인 전'}</button></div>`));
+    const n = p.bellPay ? 1 : (p.bell ? 0 : p.orders.filter(o => !o.mine).length);
+    return h + `<div class="owe"><div class="to">받을 돈 ${n}건</div>${rows.join('') || '<div class="muted">받을 돈이 없어요.</div>'}</div>`;
+  }
+  if (p.owe <= 0) return h + `<div class="owe"><div class="amount">0원</div><div class="to">${p.bell ? `오늘은 보낼 돈이 없어요. ${esc(p.bell)}님께 고맙다고 한마디! 🙏` : '보낼 돈이 없어요.'}</div></div>`;
+  const toss = p.pay.toss ? `https://toss.me/${encodeURIComponent(p.pay.toss)}/${p.owe}` : '';
+  return h + `<div class="owe"><div class="to">내가 보낼 돈 → ${esc(p.owner)}님</div><div class="amount num">${won(p.owe)}</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
+    ${toss ? `<a class="btn toss" href="${esc(toss)}" target="_blank" rel="noopener">토스로 보내기</a>` : ''}
+    ${p.pay.kakao ? `<a class="btn kakao" href="${esc(p.pay.kakao)}" target="_blank" rel="noopener" data-copy="${p.owe}">카카오페이로 보내기</a>` : ''}
+    <button class="btn ghost sm" style="width:100%" data-copy="${p.owe}">금액 복사</button>
+    <button class="toggle" style="align-self:flex-start;padding:10px 16px;font-size:15px" data-sent="1" aria-pressed="${p.mySent}">${p.mySent ? '보냈어요 ✓' : '보냈으면 눌러 주세요'}</button></div></div>`;
+}
+function confirmBell(p) {
+  sheet(`<h2>🔔 SB 골든벨</h2><p class="sub">이 팟의 주문을 <b>전부 내가</b> 냅니다. 지금 합계는 <b class="num">${won(p.total)}</b>이고, 마감 전에 더 담기면 늘어나요.</p>
+    <p class="hint">마감 전까지만 취소할 수 있어요.</p>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:18px"><button class="btn gold" id="ring">울린다!</button><button class="btn ghost" id="nah">다음에…</button></div>`);
+  $('#nah').onclick = closeSheet;
+  $('#ring').onclick = () => run('bell', { pid: p.pid, on: true }, () => { closeSheet(); toast('🔔 골든벨! 오늘은 내가 쏜다'); render(); });
+}
+
+/* ---------- 메뉴 담기 ---------- */
+function menuSheet(p) {
+  if (S.cartPid !== p.pid) { S.cart = p.myItems.map(x => Object.assign({}, x)); S.cartPid = p.pid; }
+  const menu = S.st.menu.filter(m => m.cafe === p.cafe), cats = [...new Set(menu.map(m => m.cat))].concat(['직접 입력']);
+  if (!S.tab || cats.indexOf(S.tab) < 0) S.tab = cats[0];
+  const cafe = S.st.cafes.find(c => c.name === p.cafe) || {};
+  const total = S.cart.reduce((s, x) => s + x.p * x.q, 0);
+  let list;
+  if (S.tab === '직접 입력') list = `<p class="hint" style="font-size:14px;color:var(--foam)">찾는 메뉴가 없나요? <b>${esc(p.cafe)}</b> 메뉴판(앱·매장)에서 확인한 메뉴명과 가격을 그대로 적어 주세요. 가격이 틀리면 정산이 달라져요.</p>
+    <label class="f"><span>메뉴명</span><input class="in" id="cn" maxlength="30" placeholder="예) (아이스)카페라떼"></label>
+    <label class="f"><span>옵션 메모 (선택)</span><input class="in" id="co" maxlength="30" placeholder="예) 샷 추가, 덜 달게"></label>
+    <label class="f"><span>가격 (옵션 포함, 원)</span><input class="in num" id="cp" inputmode="numeric" maxlength="6" placeholder="예) 3200"></label>
+    <button class="btn ghost" id="addC">이 메뉴 담기</button>`;
+  else list = menu.filter(m => m.cat === S.tab).map(m => `<div class="mi"><div><div class="n">${esc(m.name)}</div><div class="p num">${won(m.price)}</div></div><button class="plus" data-add="${esc(m.name)}" aria-label="${esc(m.name)} 담기">+</button></div>`).join('');
+  sheet(`<h2>메뉴 담기</h2><p class="muted" style="margin-top:-6px">${esc(p.cafe)}${cafe.min ? ` · 최소주문 ${won(cafe.min)}` : ''}</p>
+    <div class="tabs" role="tablist">${cats.map(c => `<button role="tab" aria-selected="${c === S.tab}" data-tab="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+    <div>${list}</div>
+    ${S.cart.length ? `<h2>내 장바구니</h2><div class="cart">${S.cart.map((x, i) => `<div class="cl"><div class="t"><span>${x.c ? '<span class="tag">직접</span>' : ''}${esc(x.n)} <span class="muted num">${won(x.p)}</span></span>
+      <span class="step"><button data-dec="${i}" aria-label="빼기">−</button><span class="num">${x.q}</span><button data-inc="${i}" aria-label="더하기">+</button></span></div>
+      <input class="in" data-opt="${i}" maxlength="30" value="${esc(x.o || '')}" placeholder="요청사항 (예: 얼음 적게)"></div>`).join('')}</div>
+      <p class="hint">유료 옵션(샷 추가·사이즈업 등)은 '직접 입력'에 옵션 포함 가격으로 적어 주세요.</p>` : ''}
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+      <button class="btn" id="save" ${!S.cart.length && !p.myItems.length ? 'disabled' : ''}>${S.cart.length ? `${won(total)} 담기` : '내 주문 빼기'}</button>
+      ${S.last && !S.cart.length ? `<button class="btn ghost" id="again">지난번 그대로 담기</button>` : ''}
+    </div>`);
+  const body = $('#sheetBody');
+  body.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { S.tab = b.dataset.tab; menuSheet(p); });
+  body.querySelectorAll('[data-add]').forEach(b => b.onclick = () => {
+    const m = menu.find(x => x.name === b.dataset.add), ex = S.cart.find(x => !x.c && x.n === m.name && !x.o);
+    if (ex) ex.q = Math.min(10, ex.q + 1); else S.cart.push({ n: m.name, p: m.price, q: 1, o: '' });
+    menuSheet(p);
+  });
+  body.querySelectorAll('[data-inc]').forEach(b => b.onclick = () => { const x = S.cart[b.dataset.inc]; x.q = Math.min(10, x.q + 1); menuSheet(p); });
+  body.querySelectorAll('[data-dec]').forEach(b => b.onclick = () => { const i = +b.dataset.dec; if (--S.cart[i].q < 1) S.cart.splice(i, 1); menuSheet(p); });
+  body.querySelectorAll('[data-opt]').forEach(e => e.oninput = () => S.cart[e.dataset.opt].o = e.value);
+  if ($('#addC')) $('#addC').onclick = () => {
+    const n = $('#cn').value.trim(), pr = Math.round(Number($('#cp').value.replace(/[^\d]/g, '')));
+    if (!n || !(pr >= 100 && pr <= 50000)) return toast(ERR.custom);
+    S.cart.push({ n: n, p: pr, q: 1, o: $('#co').value.trim(), c: 1 }); menuSheet(p);
+  };
+  if ($('#again')) $('#again').onclick = () => { S.cart = S.last.filter(x => x.c || menu.some(m => m.name === x.n)).map(x => Object.assign({}, x, x.c ? {} : { p: menu.find(m => m.name === x.n).price })); menuSheet(p); };
+  $('#save').onclick = () => {
+    const items = S.cart.map(x => ({ n: x.n, p: x.p, q: x.q, o: (x.o || '').trim(), c: x.c ? 1 : 0 }));
+    run('order', { pid: p.pid, items: items }, () => {
+      closeSheet(); S.cartPid = null;
+      if (items.length) { S.last = items; store.set('sbc_last', JSON.stringify(items)); render(); showCard(S.st.pots.find(x => x.pid === p.pid)); }
+      else { toast('내 주문을 뺐어요.'); render(); }
+    });
+  };
+}
+
+/* ---------- 팟 열기 · 내 정보 ---------- */
+function paySheet(next) {
+  const me = S.me, need = !me.toss && !me.kakao;
+  sheet(`<h2>${need && next ? '팟을 열려면 받을 곳이 필요해요' : '내 송금 수단'}</h2>
+    <p class="sub">정산금이 바로 들어오도록 토스 아이디나 카카오페이 송금 링크를 하나 이상 등록해 주세요. 계좌번호는 받지 않아요.</p>
+    <label class="f"><span>토스 아이디</span><input class="in" id="pt" value="${esc(me.toss)}" autocapitalize="off" spellcheck="false" placeholder="toss.me/ 뒤의 아이디"><div class="hint">토스 앱에서 만든 토스아이디(toss.me/아이디)의 아이디 부분</div></label>
+    <label class="f"><span>카카오페이 송금 링크</span><input class="in" id="pk" value="${esc(me.kakao)}" autocapitalize="off" spellcheck="false" placeholder="https://qr.kakaopay.com/…"><div class="hint">카카오페이 '송금코드'에서 복사한 링크</div></label>
+    <div style="display:flex;flex-direction:column;gap:8px"><button class="btn" id="psave">저장</button>${!next ? `<p class="muted" style="margin:10px 0 0">이름: ${esc(me.name)} · 다른 휴대폰으로 바꾸면 다시 입장 신청 후 승인받아야 해요.</p>` : ''}</div>`);
+  $('#psave').onclick = () => run('pay', { toss: $('#pt').value.trim(), kakao: $('#pk').value.trim() }, r => {
+    S.me = r.me; if (S.st) S.st.me = r.me; toast('송금 수단을 저장했어요.');
+    if (next && (r.me.toss || r.me.kakao)) next(); else closeSheet();
+  });
+}
+function openSheet() {
+  if (!S.me.toss && !S.me.kakao) return paySheet(openSheet);
+  const cafes = S.st.cafes; let cafe = cafes[0] ? cafes[0].name : '', mins = 20;
+  sheet(`<h2>팟 열기</h2>
+    <span class="muted">카페</span><div class="pick" id="pc" style="margin-top:6px">${cafes.map((c, i) => `<button aria-pressed="${i === 0}" data-c="${esc(c.name)}">${esc(c.name)}</button>`).join('')}</div>
+    <span class="muted">마감</span><div class="pick" id="pm" style="margin-top:6px">${[10, 20, 30].map(m => `<button aria-pressed="${m === 20}" data-m="${m}">${m}분 후</button>`).join('')}<button aria-pressed="false" data-m="t">시각 지정</button></div>
+    <input class="in" type="time" id="pmt" style="display:none;margin-bottom:14px">
+    <label class="f"><span>한마디 (선택)</span><input class="in" id="pmemo" maxlength="40" placeholder="예) 1층 로비에서 받아요 · 12:40 도착 예정"></label>
+    <button class="btn" id="pgo">팟 열고 링크 공유하기</button>`);
+  const body = $('#sheetBody');
+  body.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { cafe = b.dataset.c; body.querySelectorAll('[data-c]').forEach(x => x.setAttribute('aria-pressed', x === b)); });
+  body.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { body.querySelectorAll('[data-m]').forEach(x => x.setAttribute('aria-pressed', x === b)); $('#pmt').style.display = b.dataset.m === 't' ? 'block' : 'none'; mins = b.dataset.m === 't' ? 't' : +b.dataset.m; });
+  $('#pgo').onclick = () => {
+    let m = mins;
+    if (m === 't') { const v = $('#pmt').value; if (!v) return toast('마감 시각을 골라 주세요.'); const d = new Date(now()); const [hh, mm] = v.split(':'); d.setHours(+hh, +mm, 0, 0); m = Math.round((d - now()) / 60000); if (m < 5 || m > 180) return toast('마감은 5분 뒤부터 3시간 안으로 골라 주세요.'); }
+    run('open', { cafe: cafe, mins: m, memo: $('#pmemo').value.trim() }, r => { closeSheet(); go('#pot=' + encodeURIComponent(r.pid)); const p = S.st.pots.find(x => x.pid === r.pid); if (p) sharePot(p); });
+  };
+}
+function sharePot(p) {
+  const url = CFG_URL() + '#pot=' + encodeURIComponent(p.pid);
+  const text = `☕ ${p.owner}의 커피팟이 열렸어요! ${p.deadline ? new Date(p.deadline).toTimeString().slice(0, 5) + '까지' : ''} 담아 주세요`;
+  if (navigator.share) navigator.share({ title: CFG.APP, text: text, url: url }).catch(() => {});
+  else copy(text + '\n' + url, '팟 링크를 복사했어요. 단톡방에 붙여 넣어 주세요.');
+}
+const CFG_URL = () => location.href.split('#')[0].split('?')[0];
+function copy(t, m) { (navigator.clipboard ? navigator.clipboard.writeText(String(t)) : Promise.reject()).then(() => toast(m)).catch(() => { prompt('복사해 주세요', t); }); }
+
+/* ---------- 결과 카드 ---------- */
+function myCupsToday() { return S.st.pots.filter(p => p.day === S.st.today).reduce((s, p) => s + p.myItems.reduce((a, x) => a + x.q, 0), 0); }
+function showCard(p) {
+  if (!p || !p.myItems.length) return;
+  const g = !!p.bell, d = S.st.today.replace(/-/g, '. ');
+  const main = p.myItems.length > 1 ? `${esc(p.myItems[0].n)} 외 ${p.myItems.reduce((s, x) => s + x.q, 0) - 1}잔` : esc(p.myItems[0].n) + (p.myItems[0].q > 1 ? ` ×${p.myItems[0].q}` : '');
+  const card = `<div class="rc ${g ? 'goldc' : ''}" id="rc"><span class="lg"><img src="${LOGO}" alt=""></span>
+    <div class="d">${d} · ${esc(S.me.name)}</div>
+    ${g ? `<div class="k">🔔 오늘 ${esc(p.bell)}님의 골든벨로 마신 커피</div>` : `<div class="k">오늘 ${myCupsToday()}번째 잔</div>`}
+    <div class="m">${main}</div>
+    <div class="bigcup">${cup({ total: 1, min: 1, bell: g }, 92)}</div>
+    <div class="f"><small>오늘의 커피 포춘</small>${esc(fortune())}</div>
+    <div class="ft"><span>${esc(CFG.APP)}</span><span>${esc(p.cafe)}</span></div></div>`;
+  cardModal(`<h2 style="text-align:center;margin-top:8px">${g ? '골든벨 커피 도착 🔔' : '주문 완료!'}</h2>
+    <p class="sub" style="text-align:center">마감 전까지는 언제든 바꿀 수 있어요.</p>` + card, 'coffee-' + S.st.today);
+}
+function cardModal(html, fname) {
+  $('#cardBody').innerHTML = html + `<div style="display:flex;flex-direction:column;gap:8px;margin-top:18px"><button class="btn" id="saveCard">이미지 저장 · 공유</button><button class="btn ghost" id="closeCard">닫기</button></div>`;
+  $('#cardwrap').classList.add('on');
+  $('#closeCard').onclick = () => $('#cardwrap').classList.remove('on');
+  $('#saveCard').onclick = async () => {
+    try {
+      const c = await html2canvas($('#rc'), { scale: 3, backgroundColor: null, useCORS: true });
+      const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+      const file = new File([blob], fname + '.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: CFG.APP }); return; }
+      const url = c.toDataURL('image/png'), a = document.createElement('a'); a.href = url; a.download = fname + '.png'; a.click();
+      $('#rc').outerHTML = `<img class="cardimg" id="rcimg" src="${url}" alt="결과 카드">`;
+      toast('저장했어요. 안 되면 이미지를 길게 눌러 저장하세요.');
+    } catch (e) { toast('이미지를 만들지 못했어요. 화면을 캡처해 주세요.'); }
+  };
+}
+
+/* ---------- 리포트 · 명예의 전당 ---------- */
+async function loadRep() { const r = await run('report'); if (r && r.ok) S.rep = r; return r; }
+function titleOf(c) { let t = TITLES[0]; TITLES.forEach(x => { if (c >= x[0]) t = x; }); return t; }
+async function reportView() {
+  $('#app').innerHTML = topBar() + `<button class="back" id="bk">← 홈</button><h1>나의 커피 리포트</h1><p class="sub">불러오는 중…</p>`;
+  $('#bk').onclick = () => go(''); bindTop();
+  const r = await loadRep(); if (!r || !r.ok || location.hash !== '#report') return;
+  const m = r.me, t = titleOf(m.cups), badge = m.rang >= BELL_BADGE[0];
+  const mon = Number(r.month.slice(5));
+  $('#app').innerHTML = topBar() + `<button class="back" id="bk">← 홈</button><h1>${mon}월의 커피 리포트</h1>
+    <div class="rep">${cup({ total: m.cups, min: 20 }, 90)}<div><div class="big num">${m.cups}<span style="font-size:22px">잔</span></div><div class="muted">이번 달 마신 커피</div></div></div>
+    <span class="title-badge">${esc(t[1])}</span>${badge ? ` <span class="tag gold" style="font-size:14px;padding:4px 10px">${BELL_BADGE[1]} 🔔</span>` : ''}
+    <p class="sub" style="margin-top:8px">${esc(t[2])}</p>
+    <div class="grid"><div><span>쓴 돈</span><b class="num">${won(m.spent)}</b></div><div><span>최애 메뉴</span><b style="font-size:16px">${esc(m.fav || '아직 없음')}</b></div>
+    <div><span>아이스 비율</span><b class="num">${m.icePct}%</b></div><div><span>참여한 팟</span><b class="num">${m.pots}개</b></div>
+    <div><span>받은 골든벨</span><b class="num">${m.got}번</b></div><div><span>울린 골든벨</span><b class="num">${m.rang}번 · ${m.rangCups}잔</b></div></div>
+    <div class="dock"><div><button class="btn" id="repCard">리포트 카드 만들기</button></div></div>`;
+  bindTop(); $('#bk').onclick = () => go('');
+  $('#repCard').onclick = () => cardModal(`<h2 style="text-align:center;margin-top:8px">${mon}월의 나</h2><div class="rc" id="rc"><span class="lg"><img src="${LOGO}" alt=""></span>
+    <div class="d">${r.month.replace('-', '. ')} · ${esc(S.me.name)}</div><div class="k">${esc(t[1])}${badge ? ' · ' + BELL_BADGE[1] + ' 🔔' : ''}</div>
+    <div class="m" style="font-size:44px">${m.cups}잔</div>
+    <div class="stat"><div><b>${m.icePct}%</b>아이스</div><div><b>${m.got}</b>받은 골든벨</div><div><b>${m.rang}</b>울린 골든벨</div></div>
+    <div class="f"><small>최애 메뉴</small>${esc(m.fav || '아직 없음')}</div>
+    <div class="ft"><span>${esc(CFG.APP)}</span><span>MONTHLY</span></div></div>`, 'coffee-report-' + r.month);
+}
+async function hallView() {
+  $('#app').innerHTML = topBar() + `<button class="back" id="bk">← 홈</button><h1>🔔 이달의 골든벨</h1><p class="sub">불러오는 중…</p>`;
+  $('#bk').onclick = () => go(''); bindTop();
+  const r = await loadRep(); if (!r || !r.ok || location.hash !== '#hall') return;
+  $('#app').innerHTML = topBar() + `<button class="back" id="bk">← 홈</button><h1>🔔 이달의 골든벨</h1><p class="sub">이번 달 커피를 쏜 사람들. 울린 횟수, 쏜 잔 수 순서예요.</p>` +
+    (r.hall.length ? `<ol class="rank">${r.hall.map((h, i) => `<li><span class="no num">${i + 1}</span><span class="nm">${esc(h.name)}</span><span class="num">${h.times}번 · ${h.cups}잔</span></li>`).join('')}</ol>` : `<div class="empty">이번 달 첫 골든벨의 주인공은 누구?</div>`);
+  bindTop(); $('#bk').onclick = () => go('');
+}
+
+/* ---------- 관리자 ---------- */
+async function adminView() {
+  let h = `<header class="top"><span class="logo"><img src="${LOGO}" alt="SANGSIN BRAKE"></span><span class="chip">관리자</span></header><h1>입장 관리</h1>`;
+  if (!S.adm) {
+    $('#app').innerHTML = h + `<form id="af"><label class="f"><span>관리자 PIN</span><input class="in" id="apin" type="password" autocomplete="current-password" required></label><button class="btn" type="submit">열기</button></form>`;
+    $('#af').onsubmit = async e => { e.preventDefault(); S.pin = $('#apin').value; const r = await run('admin', { pin: S.pin, op: 'list' }); if (r && r.ok) { S.adm = r; adminView(); } };
+    return;
+  }
+  const ms = S.adm.members, wait = ms.filter(x => x.status === '대기'), rest = ms.filter(x => x.status !== '대기');
+  const li = (x, btns) => `<li class="check adm"><div class="a"><span><b>${esc(x.name)}</b> <span class="muted">${esc(x.portal)} · ${esc(x.at)}</span>${x.dup ? `<br><span class="tag gold">이미 승인된 ID(${esc(x.dup)}) · 기기 변경?</span>` : ''}</span><span class="row" style="flex:none;gap:6px">${btns}</span></div></li>`;
+  h += `<h2>대기 ${wait.length}명</h2>` + (wait.length ? `<ul class="ol">${wait.map(x => li(x, `<button class="btn sm" data-op="approve" data-row="${x.row}">승인</button><button class="btn ghost sm" data-op="reject" data-row="${x.row}">거절</button>`)).join('')}</ul>` : '<div class="empty">대기 중인 신청이 없어요.</div>');
+  h += `<h2>회원 ${rest.length}명</h2><ul class="ol">${rest.map(x => li(x, x.status === '승인' ? `<button class="btn ghost sm" data-op="block" data-row="${x.row}">차단</button>` : `<span class="tag">${esc(x.status)}</span><button class="btn ghost sm" data-op="approve" data-row="${x.row}">승인</button>`)).join('')}</ul>
+    <p class="hint">구글 시트 '회원' 탭에서 상태 칸을 '승인'으로 바꿔도 똑같이 반영돼요.</p>
+    <div class="dock"><div><button class="btn ghost" id="arefresh">새로고침</button></div></div>`;
+  $('#app').innerHTML = h;
+  document.querySelectorAll('[data-op]').forEach(b => b.onclick = () => {
+    if (b.dataset.op === 'block' && !confirm('이 회원을 차단할까요?')) return;
+    run('admin', { pin: S.pin, op: b.dataset.op, row: +b.dataset.row }, r => { S.adm = r; toast({ approve: '승인했어요.', reject: '거절했어요.', block: '차단했어요.' }[b.dataset.op]); adminView(); });
+  });
+  $('#arefresh').onclick = () => run('admin', { pin: S.pin, op: 'list' }, r => { S.adm = r; adminView(); });
+}
+
+/* ---------- 공통 ---------- */
+function sheet(html) { $('#sheetBody').innerHTML = html; $('#sheet').classList.add('on'); $('#scrim').classList.add('on'); }
+function closeSheet() { $('#sheet').classList.remove('on'); $('#scrim').classList.remove('on'); }
+$('#scrim').onclick = closeSheet;
+function fitDock() { const d = document.querySelector('#app .dock'); $('#app').style.paddingBottom = d ? (d.offsetHeight + 28) + 'px' : ''; }
+new MutationObserver(fitDock).observe($('#app'), { childList: true });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSheet(); $('#cardwrap').classList.remove('on'); } });
+function bindTop() { const b = $('#myBtn'); if (b) b.onclick = () => paySheet(); }
+function go(h) { if (location.hash === h || (h === '' && !location.hash)) render(); else location.hash = h; window.scrollTo(0, 0); }
+window.addEventListener('hashchange', () => { closeSheet(); render(); });
+setInterval(() => {
+  document.querySelectorAll('[data-dl]').forEach(e => { e.textContent = left(+e.dataset.dl); });
+}, 1000);
+setInterval(async () => {  // 15초마다 새 주문 반영 (시트·카드 열려 있으면 쉼)
+  if (document.hidden || S.busy || !S.me || S.me.status !== '승인' || $('#sheet').classList.contains('on') || $('#cardwrap').classList.contains('on')) return;
+  if (location.hash.startsWith('#admin') || location.hash === '#report' || location.hash === '#hall') return;
+  try { const r = await api('state'); if (r.ok !== false) { setState(r); render(); } } catch (e) {}
+}, 15000);
+setInterval(async () => {  // 승인 대기 중이면 30초마다 확인
+  if (S.me && S.me.status === '대기' && !document.hidden) boot(true);
+}, 30000);
+
+async function boot(quiet) {
+  try { S.last = JSON.parse(store.get('sbc_last') || 'null'); } catch (e) {}
+  if (location.hash.startsWith('#admin')) return render();
+  if (!CFG.SHEET_URL) { $('#pv').innerHTML = '<div class="preview">미리보기: 시트 미연결</div>'; S.me = null; return render(); }
+  try {
+    const r = await api('me');
+    S.me = r.me;
+    if (S.me && S.me.status === '승인') { const s = await api('state'); if (s.ok !== false) setState(s); else S.me = null; }
+  } catch (e) { if (!quiet) toast(ERR.net); }
+  render();
+  if (quiet && S.me && S.me.status === '대기') toast('아직 승인 대기 중이에요.');
+}
+boot();
+</script>
+</body>
+</html>
