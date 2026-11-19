@@ -11,7 +11,7 @@ Sheet.prototype = {
     getValues() { return S.d.slice(r - 1, r - 1 + nr).map(x => { const y = x.slice(c - 1, c - 1 + nc); while (y.length < nc) y.push(''); return y; }); },
     setValues(v) { v.forEach((row, i) => { S.d[r - 1 + i] = S.d[r - 1 + i] || []; row.forEach((x, j) => S.d[r - 1 + i][c - 1 + j] = conv(x)); }); } }; },
 };
-const book = { tabs: {}, getSheetByName(n) { return this.tabs[n] || null; }, insertSheet(n) { return this.tabs[n] = new Sheet(n); } };
+const book = { tabs: {}, getName() { return '테스트 시트'; }, getSheetByName(n) { return this.tabs[n] || null; }, insertSheet(n) { return this.tabs[n] = new Sheet(n); } };
 global.__NOW = Date.parse('2026-11-19T10:00:00+09:00');
 const cache = {};
 global.SpreadsheetApp = { getActiveSpreadsheet: () => book, openById: () => book };

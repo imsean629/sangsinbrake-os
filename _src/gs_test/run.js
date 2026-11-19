@@ -9,17 +9,18 @@ const A = K('sean'), B = K('kim'), C = K('lee'), FAKE = K('fake'), B2 = K('kimne
 // 1) 입장 신청·승인
 chk(call({ a: 'state', key: A }).error === 'auth', '미가입 기기는 막힘');
 chk(call({ a: 'join', portal: 'sean01', name: 'Sean', key: A }).me.status === '대기', '입장 신청 → 대기');
+chk(call({ a: 'join', portal: 'park01@sangsin.com', name: '박', key: K('park') }).ok && book.tabs['회원'].d[2][1] === 'park01', '@sangsin.com 자동 제거');
 chk(call({ a: 'join', portal: 'bad id!', name: 'x', key: B }).error === 'input', 'PORTAL ID 형식 검증');
 call({ a: 'join', portal: 'kim01', name: '김상신', key: B });
 call({ a: 'join', portal: 'lee01', name: '=이브레이크', key: C });
 chk(call({ a: 'state', key: A }).error === 'auth', '승인 전엔 이용 불가');
 chk(call({ a: 'admin', pin: 'wrong', op: 'list' }).error === 'pin', '관리자 PIN 오류');
 let L = call({ a: 'admin', pin: 'test1234', op: 'list' });
-chk(L.members.length === 3 && L.members.every(x => x.status === '대기'), '관리자 대기 목록 3명');
+chk(L.members.length === 4 && L.members.every(x => x.status === '대기'), '관리자 대기 목록 3명');
 const row = p => L.members.find(x => x.portal === p).row;
 ['sean01', 'kim01', 'lee01'].forEach(p => { L = call({ a: 'admin', pin: 'test1234', op: 'approve', row: row(p) }); });
 chk(call({ a: 'me', key: A }).me.status === '승인', '승인 후 상태 승인');
-chk(book.tabs['회원'].d[3][2] === '=이브레이크', '이름은 텍스트로 저장(수식 아님)');
+chk(book.tabs['회원'].d.some(r => r[2] === '=이브레이크'), '이름은 텍스트로 저장(수식 아님)');
 chk(!JSON.stringify(book.tabs['회원'].d).includes(A), '기기 키는 원문 저장 안 함');
 
 // 2) 송금 수단 없으면 팟 못 엶
@@ -122,6 +123,6 @@ chk(call({ a: 'state', key: A }).ok !== false, '진짜 Sean은 그대로');
 // 12) PIN 무차별 대입 잠금
 for (let i = 0; i < 10; i++) call({ a: 'admin', pin: 'x' + i });
 chk(call({ a: 'admin', pin: 'test1234' }).error === 'locked', 'PIN 10회 실패 → 잠금');
-chk(JSON.parse(doGet({ parameter: {} }).getContent()).ok, 'doGet 핑');
+const pg = JSON.parse(doGet({ parameter: {} }).getContent()); chk(pg.ok && pg.adminPin === '설정됨', 'doGet 핑 ' + JSON.stringify(pg));
 console.log(ok ? 'ALL OK' : 'SOME FAILED');
 process.exit(ok ? 0 : 1);

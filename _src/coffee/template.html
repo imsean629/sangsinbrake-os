@@ -62,6 +62,7 @@ label.f span{display:block;font-size:14px;color:var(--foam);margin-bottom:6px}
 .in{width:100%;height:52px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--roast);padding:0 14px;font-size:16px;outline:none}
 .in:focus{border-color:var(--foam)}
 .hint{font-size:13px;color:var(--dim);margin-top:6px}
+.note{font-style:normal;font-weight:700;font-size:12px;color:#2A1A00;background:var(--gold);border-radius:6px;padding:2px 8px;margin-left:6px;vertical-align:1px}
 .pick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
 .pick button{border:1px solid var(--line);border-radius:999px;padding:9px 16px;font-size:15px;color:var(--foam)}
 .pick button[aria-pressed=true]{background:var(--crema);color:var(--bean);border-color:var(--crema);font-weight:700}
@@ -226,11 +227,11 @@ async function api(a, d) {
   return r.json();
 }
 function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2600); }
-function fail(r) { const m = ERR[(r && r.error) || 'net'] || ERR.net; toast(m); if (r && r.error === 'auth') { S.me = null; boot(); } }
+function fail(r) { const m = (ERR[(r && r.error) || 'net'] || ERR.net) + (r && r.msg ? ' (' + r.msg + ')' : ''); toast(m); if (r && r.error === 'auth') { S.me = null; boot(); } }
 async function run(a, d, ok) {
   if (S.busy) return; S.busy = true;
   try { const r = await api(a, d); if (r.ok === false) { if (r.error !== 'min') fail(r); return r; } if (r.pots) setState(r); if (ok) ok(r); return r; }
-  catch (e) { toast(ERR.net); } finally { S.busy = false; }
+  catch (e) { toast(ERR.net); console.error(e); } finally { S.busy = false; }
 }
 function setState(r) { S.st = r; S.me = r.me; S.offset = (r.now || Date.now()) - Date.now(); }
 const now = () => Date.now() + S.offset;
@@ -272,7 +273,7 @@ function gateView() {
     <div class="dock"><div><button class="btn" id="reapply">다시 신청하기</button></div></div>`;
   else body = `<h1>오늘 커피,<br>누가 모아?</h1><p class="sub">묻고, 받고, 정산까지 한 번에.</p>
     <div style="margin:26px 0 22px">${cup({ total: 7400, min: 9900 }, 110)}</div>
-    <form id="joinF"><label class="f"><span>PORTAL ID</span><input class="in" id="jp" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="30" required></label>
+    <form id="joinF"><label class="f"><span>PORTAL ID <em class="note">@sangsin.com은 빼고 입력</em></span><input class="in" id="jp" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="40" placeholder="예) hong.gildong" required></label>
     <label class="f"><span>이름</span><input class="in" id="jn" autocomplete="name" maxlength="12" required></label>
     <p class="hint">관리자가 확인한 뒤에 입장할 수 있어요. 주문서에는 이름만 보여요.</p>
     <div class="dock"><div><button class="btn" type="submit">입장 신청</button></div></div></form>`;
@@ -280,7 +281,7 @@ function gateView() {
   const f = $('#joinF');
   if (f) f.onsubmit = async e => {
     e.preventDefault();
-    const r = await run('join', { portal: $('#jp').value.trim(), name: $('#jn').value.trim() });
+    const r = await run('join', { portal: $('#jp').value.trim().replace(/@sangsin\.com$/i, ''), name: $('#jn').value.trim() });
     if (r && r.ok) { S.me = r.me; if (r.me.status === '승인') boot(); else render(); }
   };
   if ($('#recheck')) $('#recheck').onclick = () => boot(true);

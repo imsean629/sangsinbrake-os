@@ -87,18 +87,29 @@ function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).se
 function err_(code, extra) { const o = { ok: false, error: code }; for (const k in (extra || {})) o[k] = extra[k]; return o; }
 
 /* ---------- 진입점 ---------- */
+// 오류가 나도 HTML 오류 페이지 대신 JSON으로 돌려줌(앱 화면에 원인이 보이게)
 function doPost(e) {
   let d = {};
   try { d = JSON.parse(e.postData.contents); } catch (x) { return json_(err_('bad')); }
-  return json_(handle_(d));
+  try { return json_(handle_(d)); } catch (x) { return json_(err_('server', { msg: String(x && x.message || x) })); }
 }
 function doGet(e) {
   const p = (e && e.parameter) || {};
-  if (p.q) { try { return json_(handle_(JSON.parse(p.q))); } catch (x) { return json_(err_('bad')); } }
-  return json_({ ok: true, app: 'SB COFFEE RUN' });
+  try {
+    if (p.q) return json_(handle_(JSON.parse(p.q)));
+    return json_(ping_());
+  } catch (x) { return json_(err_('server', { msg: String(x && x.message || x) })); }
+}
+// 웹앱 주소를 브라우저로 열면 연결 상태를 보여 줌
+function ping_() {
+  const ss = book_();
+  if (!ss) return err_('nosheet', { msg: '스크립트가 스프레드시트에 붙어 있지 않아요. 시트의 [확장 프로그램 → Apps Script]에서 만들거나 SHEET_ID를 넣어 주세요.' });
+  ['members', 'cafes', 'menu', 'pots', 'orders'].forEach(sheet_);
+  return { ok: true, app: 'SB COFFEE RUN', sheet: ss.getName(), adminPin: String(ADMIN_PIN).length >= 6 ? '설정됨' : '없음(6자 이상 필요)' };
 }
 
 function handle_(d) {
+  if (!book_()) return err_('nosheet');
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
   try {
@@ -129,7 +140,7 @@ function pub_(m) {
 }
 
 function join_(d) {
-  const portal = clean_(d.portal, 30), name = clean_(d.name, 12);
+  const portal = clean_(d.portal, 40).replace(/@sangsin\.com$/i, '').slice(0, 30), name = clean_(d.name, 12);
   if (!/^[A-Za-z0-9._@-]{2,30}$/.test(portal) || name.length < 1 || !validKey_(d.key)) return err_('input');
   const old = member_(d.key);
   if (old && ['승인', '차단'].indexOf(txt_(old['상태'])) >= 0) return { ok: true, me: pub_(old) };
