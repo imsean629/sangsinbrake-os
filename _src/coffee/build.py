@@ -7,7 +7,7 @@ from data import APP, URL, FORTUNES, TITLES, BELL_BADGE, ERR
 
 H = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(f"{H}/../..")
-SHEET = sys.argv[1] if len(sys.argv) > 1 else ""
+SHEET = sys.argv[1] if len(sys.argv) > 1 else "https://script.google.com/macros/s/AKfycbxxZqyqD4xAl_IsoAqt-V3ppcofcRXVUJanbfsBspi-frbiRuTgsH8JBwyzo2NfUsiF/exec"
 os.makedirs(f"{H}/out", exist_ok=True); os.makedirs(f"{ROOT}/coffee", exist_ok=True)
 
 def png64(im):
