@@ -46,7 +46,15 @@ try:
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
         b = p.chromium.launch(executable_path="/usr/bin/google-chrome"); pg = b.new_page(viewport={"width": 1200, "height": 630})
-        pg.goto(f"file://{H}/out/og.html"); pg.screenshot(path=f"{ROOT}/coffee/og.png"); b.close()
+        pg.goto(f"file://{H}/out/og.html"); pg.screenshot(path=f"{ROOT}/coffee/og.png")
+        pg.set_viewport_size({"width": 512, "height": 512}); pg.goto(f"file://{H}/icon.html")
+        pg.locator("#sq").screenshot(path=f"{H}/out/icon-512.png"); b.close()
+    big = Image.open(f"{H}/out/icon-512.png").convert("RGB")
+    big.save(f"{ROOT}/coffee/icon-512.png", optimize=True)
+    big.resize((192, 192), Image.LANCZOS).save(f"{ROOT}/coffee/icon-192.png", optimize=True)
+    big.resize((180, 180), Image.LANCZOS).save(f"{ROOT}/coffee/apple-touch-icon.png", optimize=True)
+    m = Image.new("L", (512, 512), 0); from PIL import ImageDraw; ImageDraw.Draw(m).rounded_rectangle((0, 0, 511, 511), 112, fill=255)
+    fav = big.convert("RGBA"); fav.putalpha(m); fav.resize((64, 64), Image.LANCZOS).save(f"{ROOT}/coffee/favicon.png", optimize=True)
 except Exception as e:
     print("og.png 건너뜀:", e)
 print("built", os.path.getsize(f"{ROOT}/coffee/index.html") // 1024, "KB | sheet:", SHEET or "(미연결·미리보기)")
