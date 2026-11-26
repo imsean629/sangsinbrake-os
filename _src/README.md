@@ -31,3 +31,8 @@ cd ../coffee && python3 build.py "<웹앱 URL>" && python3 test.py && python3 bu
 - 정산: 토스 링크 `https://toss.me/<아이디>/<금액>`, 카카오페이는 링크 열기 + 금액 복사. 참여자 "보냈어요" → 주인 "입금 확인" → 모두 확인되면 자동 정산완료.
 - 커피 포춘: 날짜+이름 해시(하루 고정). 리포트/명예의 전당: 이번 달 주문완료·정산완료 팟만.
 - 보안: 문자열은 모두 `'` 접두로 저장(수식 주입 방지), 응답에 PORTAL ID·키 없음, 관리자 PIN 10회 실패 시 10분 잠금. **ADMIN_PIN은 저장소 파일에선 비워 두고 배포본에만 입력.**
+
+## 추가 (2026-11-26)
+- 아이콘: `coffee/icon.html`을 build.py가 렌더링 → `favicon.png`, `apple-touch-icon.png`(180), `icon-192/512.png`. 홈 화면 이름은 `apple-mobile-web-app-title`·`manifest.webmanifest`(short_name) = SB COFFEE RUN. display는 browser(아이폰 홈 화면 앱은 저장소가 분리돼 재승인이 필요해지므로 standalone 안 씀).
+- 도착 알림: 주인이 주문완료/정산완료 팟에서 **🚚 도착했어요**(1회) → 팟 '도착시각·도착메모' 기록 → ① 참여자 앱(15초 폴링, 화면 꺼져 있으면 도착 대기 중일 때만 1분)에서 전체 화면 알림·진동·알림음·(허용 시) 브라우저 알림, 팟별 1회(localStorage `sbc_arr_<pid>`) ② 메일알림 켠 참여자에게 `<PORTAL ID>@sangsin.com` 메일(MailApp, 주인 제외). 회원 '메일알림' 열: 빈칸/Y=켬(기본), N=끔. 내 정보에서 토글.
+- Apps Script: 열이 늘면 `sheet_()`가 머리글을 자동 보정. 메일 권한은 편집기에서 `setup` 실행으로 승인.

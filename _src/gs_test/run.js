@@ -42,7 +42,7 @@ r = call({ a: 'order', key: B, pid, items: [{ n: '(아이스)아메리카노', q
 const ob = r.pots[0].orders.find(o => o.mine);
 chk(ob.amount === 7000 && r.pots[0].total === 7000, '직접 입력 포함 7,000원(덮어쓰기)');
 chk(book.tabs['주문'].d.length === 2, '한 사람 한 줄');
-chk(!JSON.stringify(r).includes('kim01') && !JSON.stringify(r).includes('sean01'), '응답에 PORTAL ID 없음');
+chk(!JSON.stringify(r.pots).includes('kim01') && !JSON.stringify(r.pots).includes('sean01') && r.me.portal === 'kim01', '팟 정보엔 PORTAL ID 없음(본인 정보에만)');
 
 // 4) 최소주문 미달
 chk(call({ a: 'close', key: B, pid }).error === 'owner', '주인만 확정');
@@ -93,6 +93,16 @@ let sB = call({ a: 'state', key: B }).pots.find(p => p.pid === p2);
 chk(sB.orders.find(o => o.name === 'Sean').sent, '주인 화면에 Sean 보냈어요 표시');
 sB.orders.filter(o => !o.mine).forEach(o => { r = call({ a: 'confirm', key: B, pid: p2, id: o.id }); });
 chk(r.pots.find(p => p.pid === p2).status === '정산완료', '모두 확인 → 자동 정산완료');
+
+// 8-1) 도착 알림
+call({ a: 'mail', key: C, on: false });
+chk(call({ a: 'me', key: C }).me.mail === false && call({ a: 'me', key: A }).me.mail === true, '메일알림 기본 켬, 끄기 가능');
+chk(call({ a: 'arrive', key: A, pid: p2 }).error === 'owner', '도착은 주인만');
+r = call({ a: 'arrive', key: B, pid: p2, msg: '1층 로비' });
+chk(r.mailed === 1 && MAILS.length === 1 && MAILS[0].to === 'sean01@sangsin.com' && /1층 로비/.test(MAILS[0].subject) && /아메리카노 ×2/.test(MAILS[0].body), '도착 메일: 주인·알림끈 사람 제외, sean01@sangsin.com ' + JSON.stringify(MAILS.map(x => x.to)));
+chk(call({ a: 'state', key: A }).pots.find(p => p.pid === p2).arrived > 0, '참여자 화면에 도착 표시');
+chk(call({ a: 'arrive', key: B, pid: p2 }).error === 'arrived', '도착은 한 번만');
+chk(book.tabs['팟'].d[0].includes('도착시각') && book.tabs['회원'].d[0].includes('메일알림'), '머리글에 새 열 포함');
 
 // 9) 빈 주문 = 취소
 r = call({ a: 'open', key: C, cafe: '더벤티 테크노폴리스점', mins: 15 });

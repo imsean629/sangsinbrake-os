@@ -12,7 +12,7 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="apple-mobile-web-app-title" content="SB 커피">
+<meta name="apple-mobile-web-app-title" content="SB COFFEE RUN">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
 :root{
@@ -198,6 +198,13 @@ label.f span{display:block;font-size:14px;color:var(--foam);margin-bottom:6px}
 .back{display:inline-flex;align-items:center;gap:4px;color:var(--foam);font-size:15px;padding:8px 0}
 .adm li{display:block}
 .adm .a{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.arrive{position:fixed;inset:0;z-index:35;background:var(--bean);display:none;flex-direction:column;justify-content:center;padding:32px 24px;text-align:left}
+.arrive.on{display:flex}
+.arrive>div{max-width:400px;margin:0 auto;width:100%}
+.arrive h1{font-size:40px;margin:18px 0 8px}
+.arrive .where{font-size:20px;font-weight:700;color:var(--gold);margin-bottom:16px}
+.arrive .cup{margin:8px 0 18px}
+.switch{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-top:1px solid var(--steam);margin-top:6px}
 .preview{background:var(--red);color:#fff;text-align:center;font-size:12px;padding:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -209,6 +216,7 @@ label.f span{display:block;font-size:14px;color:var(--foam);margin-bottom:6px}
 <section class="sheet" id="sheet" role="dialog" aria-modal="true"><div class="grab"></div><div id="sheetBody"></div></section>
 <div class="cardwrap" id="cardwrap" role="dialog" aria-modal="true"><div id="cardBody"></div></div>
 <div class="toast" id="toast" role="status"></div>
+<div class="arrive" id="arrive" role="alertdialog" aria-modal="true"><div id="arriveBody"></div></div>
 <script>/*__H2C__*/</script>
 <script>
 const CFG = { SHEET_URL: "", APP: "__APP__" };
@@ -242,7 +250,7 @@ async function run(a, d, ok) {
   try { const r = await api(a, d); if (r.ok === false) { if (r.error !== 'min') fail(r); return r; } if (r.pots) setState(r); if (ok) ok(r); return r; }
   catch (e) { toast(ERR.net); console.error(e); } finally { S.busy = false; }
 }
-function setState(r) { S.st = r; S.me = r.me; S.offset = (r.now || Date.now()) - Date.now(); }
+function setState(r) { S.st = r; S.me = r.me; S.offset = (r.now || Date.now()) - Date.now(); setTimeout(checkArrive, 0); }
 const now = () => Date.now() + S.offset;
 function hash(s) { let h = 2166136261; for (const c of String(s)) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
 const fortune = () => FORTUNES[hash((S.st ? S.st.today : '') + '|' + (S.me ? S.me.name : '')) % FORTUNES.length];
@@ -254,6 +262,7 @@ function cup(p, w) {
 }
 function itemsText(items) { return items.map(x => esc(x.n) + (x.o ? ` <em>(${esc(x.o)})</em>` : '') + (x.q > 1 ? ` ×${x.q}` : '')).join(', '); }
 function statusTag(p) {
+  if (p.arrived) return '<span class="tag ok">도착</span>' + (p.status === '정산완료' ? '' : '<span class="tag">정산 중</span>');
   if (p.status === '모집') return p.expired ? '<span class="tag">마감 시간 지남</span>' : '<span class="tag live">모집 중</span>';
   if (p.status === '확정') return '<span class="tag">주문 준비</span>';
   if (p.status === '주문완료') return '<span class="tag">정산 중</span>';
@@ -329,7 +338,8 @@ function potView(pid) {
     <div class="clock ${p.expired ? 'late' : ''}">${esc(p.cafe)}${open ? ` · ${p.expired ? '<b>마감 시간 지남</b>' : `<b class="num" data-dl="${p.deadline}">${left(p.deadline)}</b> 남음`}` : ''}</div>
     <div class="hero">${cup(p, 104)}<div><div class="big num">${won(p.total)}</div>
       <div class="of">${p.total >= p.min ? '최소주문 달성! 🎉' : `최소주문 ${won(p.min)}까지 <b class="num">${won(short)}</b>`}<br>${p.orders.length}명 · ${p.cups}잔</div></div></div>
-    ${p.memo ? `<div class="memo">📍 ${esc(p.memo)}</div>` : ''}
+    ${p.arrived ? `<div class="banner" style="background:var(--ok);color:#0E2A1A">☕ 커피 도착!${p.arriveMsg ? ` · ${esc(p.arriveMsg)}` : ''}<small>${new Date(p.arrived).toTimeString().slice(0, 5)}에 ${esc(p.owner)}님이 알렸어요</small></div>` : ''}
+    ${p.memo && !p.arrived ? `<div class="memo">📍 ${esc(p.memo)}</div>` : ''}
     ${p.bell ? `<div class="banner">🔔 골든벨! ${esc(p.bell)}님이 쏩니다<small>오늘 커피는 공짜예요 ☕${p.bellMine && open ? ' · 마감 전까지만 취소할 수 있어요' : ''}</small></div>` : ''}`;
   if (p.status !== '모집' && p.status !== '확정') h += settleBlock(p);
   if (p.status === '확정' && p.isOwner) h += orderSheet(p, true);
@@ -344,6 +354,7 @@ function potView(pid) {
   if (p.isOwner && open) dock = `<button class="btn red" id="closeBtn">마감하고 주문 확정</button>` + dock;
   if (p.isOwner && p.status === '확정') dock = `<button class="btn" id="orderedBtn">주문했어요 → 정산 시작</button>`;
   if (p.isOwner && p.status === '주문완료') dock = `<button class="btn ghost" id="finishBtn">정산 끝내기</button>`;
+  if (p.isOwner && (p.status === '주문완료' || p.status === '정산완료') && !p.arrived) dock = `<button class="btn gold" id="arriveBtn">🚚 도착했어요</button>` + dock;
   if (p.myItems.length && !open) dock += `<button class="btn ghost" id="myCard">내 주문 카드 보기</button>`;
   if (dock) h += `<div class="dock"><div>${dock}</div></div>`;
   $('#app').innerHTML = h;
@@ -367,6 +378,7 @@ function potView(pid) {
   on('finishBtn', () => { if (confirm('아직 확인 안 된 송금이 있어도 정산을 끝낼까요?')) run('finish', { pid: p.pid }, () => { toast('정산 끝! 수고했어요 ☕'); render(); }); });
   on('copyOrder', () => copy(orderText(p), '주문서를 복사했어요.'));
   on('myCard', () => showCard(p));
+  on('arriveBtn', () => arriveSheet(p));
   document.querySelectorAll('[data-sent]').forEach(b => b.onclick = () => run('sent', { pid: p.pid, on: b.getAttribute('aria-pressed') !== 'true' }, () => render()));
   document.querySelectorAll('[data-conf]').forEach(b => b.onclick = () => run('confirm', { pid: p.pid, id: b.dataset.conf, on: b.getAttribute('aria-pressed') !== 'true' }, () => render()));
   document.querySelectorAll('[data-copy]').forEach(b => b.onclick = () => copy(b.dataset.copy, '금액을 복사했어요.'));
@@ -457,6 +469,7 @@ function menuSheet(p) {
     const items = S.cart.map(x => ({ n: x.n, p: x.p, q: x.q, o: (x.o || '').trim(), c: x.c ? 1 : 0 }));
     run('order', { pid: p.pid, items: items }, () => {
       closeSheet(); S.cartPid = null;
+      if (items.length && window.Notification && Notification.permission === 'default') { try { Notification.requestPermission(); } catch (e) {} }
       if (items.length) { S.last = items; store.set('sbc_last', JSON.stringify(items)); render(); showCard(S.st.pots.find(x => x.pid === p.pid)); }
       else { toast('내 주문을 뺐어요.'); render(); }
     });
@@ -470,7 +483,9 @@ function paySheet(next) {
     <p class="sub">정산금이 바로 들어오도록 토스 아이디나 카카오페이 송금 링크를 하나 이상 등록해 주세요. 계좌번호는 받지 않아요.</p>
     <label class="f"><span>토스 아이디</span><input class="in" id="pt" value="${esc(me.toss)}" autocapitalize="off" spellcheck="false" placeholder="toss.me/ 뒤의 아이디"><div class="hint">토스 앱에서 만든 토스아이디(toss.me/아이디)의 아이디 부분</div></label>
     <label class="f"><span>카카오페이 송금 링크</span><input class="in" id="pk" value="${esc(me.kakao)}" autocapitalize="off" spellcheck="false" placeholder="https://qr.kakaopay.com/…"><div class="hint">카카오페이 '송금코드'에서 복사한 링크</div></label>
+    ${!next ? `<div class="switch"><span><b>도착 메일 알림</b><br><span class="muted">${esc(me.portal || '')}@sangsin.com 으로 "커피 도착" 메일을 받아요</span></span><button class="toggle" id="mailT" aria-pressed="${me.mail !== false}">${me.mail !== false ? '켜짐' : '꺼짐'}</button></div>` : ''}
     <div style="display:flex;flex-direction:column;gap:8px"><button class="btn" id="psave">저장</button>${!next ? `<p class="muted" style="margin:10px 0 0">이름: ${esc(me.name)} · 다른 휴대폰으로 바꾸면 다시 입장 신청 후 승인받아야 해요.</p>` : ''}</div>`);
+  if ($('#mailT')) $('#mailT').onclick = () => run('mail', { on: me.mail === false }, r => { S.me = r.me; if (S.st) S.st.me = r.me; toast(r.me.mail ? '도착 메일 알림을 켰어요.' : '도착 메일 알림을 껐어요.'); paySheet(); });
   $('#psave').onclick = () => run('pay', { toss: $('#pt').value.trim(), kakao: $('#pk').value.trim() }, r => {
     S.me = r.me; if (S.st) S.st.me = r.me; toast('송금 수단을 저장했어요.');
     if (next && (r.me.toss || r.me.kakao)) next(); else closeSheet();
@@ -502,6 +517,42 @@ function sharePot(p) {
 }
 const CFG_URL = () => location.href.split('#')[0].split('?')[0];
 function copy(t, m) { (navigator.clipboard ? navigator.clipboard.writeText(String(t)) : Promise.reject()).then(() => toast(m)).catch(() => { prompt('복사해 주세요', t); }); }
+
+/* ---------- 도착 ---------- */
+function arriveSheet(p) {
+  sheet(`<h2>🚚 커피 도착 알리기</h2><p class="sub">참여자 화면에 도착 알림이 뜨고, 메일 알림을 켠 사람에게 회사 메일이 가요. 한 번만 보낼 수 있어요.</p>
+    <label class="f"><span>어디로 오면 되나요?</span><input class="in" id="amsg" maxlength="60" value="${esc(p.memo)}" placeholder="예) 1층 로비 테이블"></label>
+    <div style="display:flex;flex-direction:column;gap:8px"><button class="btn gold" id="ago">도착 알림 보내기</button><button class="btn ghost" id="ano">취소</button></div>`);
+  $('#ano').onclick = closeSheet;
+  $('#ago').onclick = () => run('arrive', { pid: p.pid, msg: $('#amsg').value.trim() }, r => {
+    closeSheet(); render();
+    toast(r.mailErr ? '앱 알림은 보냈지만 메일 일부가 실패했어요.' : `도착을 알렸어요.${r.mailed ? ` 메일 ${r.mailed}통 발송` : ''}`);
+  });
+}
+function beep() {
+  try { const C = new (window.AudioContext || window.webkitAudioContext)(), o = C.createOscillator(), g = C.createGain();
+    o.type = 'sine'; o.frequency.value = 880; o.connect(g); g.connect(C.destination); g.gain.setValueAtTime(.001, C.currentTime);
+    g.gain.exponentialRampToValueAtTime(.3, C.currentTime + .02); g.gain.exponentialRampToValueAtTime(.001, C.currentTime + .5);
+    o.start(); o.frequency.setValueAtTime(1175, C.currentTime + .18); o.stop(C.currentTime + .55); } catch (e) {}
+}
+// 내가 주문한(또는 골든벨 울린) 팟이 도착하면 한 번만 전체 화면 알림
+function checkArrive() {
+  if (!S.st || $('#arrive').classList.contains('on')) return;
+  const p = S.st.pots.find(x => x.arrived && !x.isOwner && (x.myItems.length || x.bellMine) && !store.get('sbc_arr_' + x.pid) && now() - x.arrived < 3 * 3600e3);
+  if (!p) return;
+  store.set('sbc_arr_' + p.pid, '1');
+  $('#arriveBody').innerHTML = `${cup({ total: 1, min: 1, bell: p.bell }, 96)}<h1>커피 도착! ☕</h1>
+    ${p.arriveMsg ? `<div class="where">📍 ${esc(p.arriveMsg)}</div>` : ''}
+    <p class="sub">${esc(p.owner)}님 팟 · 내 주문: ${itemsText(p.myItems) || '골든벨 🔔'}</p>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:20px"><button class="btn" id="arrOk">가지러 갈게요</button>${p.owe > 0 && !p.mySent ? '<button class="btn ghost" id="arrPay">송금하러 가기</button>' : ''}</div>`;
+  $('#arrive').classList.add('on');
+  try { navigator.vibrate && navigator.vibrate([250, 120, 250, 120, 400]); } catch (e) {}
+  beep();
+  try { if (document.hidden && window.Notification && Notification.permission === 'granted') new Notification('☕ 커피 도착!', { body: (p.arriveMsg ? p.arriveMsg + ' · ' : '') + p.owner + '님 팟', icon: 'icon-192.png', tag: p.pid }); } catch (e) {}
+  const close = () => $('#arrive').classList.remove('on');
+  $('#arrOk').onclick = close;
+  if ($('#arrPay')) $('#arrPay').onclick = () => { close(); go('#pot=' + encodeURIComponent(p.pid)); };
+}
 
 /* ---------- 결과 카드 ---------- */
 function myCupsToday() { return S.st.pots.filter(p => p.day === S.st.today).reduce((s, p) => s + p.myItems.reduce((a, x) => a + x.q, 0), 0); }
@@ -605,8 +656,11 @@ window.addEventListener('hashchange', () => { closeSheet(); render(); });
 setInterval(() => {
   document.querySelectorAll('[data-dl]').forEach(e => { e.textContent = left(+e.dataset.dl); });
 }, 1000);
-setInterval(async () => {  // 15초마다 새 주문 반영 (시트·카드 열려 있으면 쉼)
-  if (document.hidden || S.busy || !S.me || S.me.status !== '승인' || $('#sheet').classList.contains('on') || $('#cardwrap').classList.contains('on')) return;
+let tick = 0;
+setInterval(async () => {  // 15초마다 새 주문 반영 (시트·카드 열려 있으면 쉼). 화면이 꺼져 있으면 도착 대기 중일 때만 1분마다
+  tick++;
+  if (document.hidden && (tick % 4 || !(S.st && S.st.pots.some(p => !p.arrived && !p.isOwner && p.myItems.length && p.status !== '모집')))) return;
+  if (S.busy || !S.me || S.me.status !== '승인' || $('#sheet').classList.contains('on') || $('#cardwrap').classList.contains('on') || $('#arrive').classList.contains('on')) return;
   if (location.hash.startsWith('#admin') || location.hash === '#report' || location.hash === '#hall') return;
   try { const r = await api('state'); if (r.ok !== false) { setState(r); render(); } } catch (e) {}
 }, 15000);

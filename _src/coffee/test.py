@@ -143,8 +143,26 @@ async def main():
                 await B.locator("[data-conf][aria-pressed=false]").first.click(); await B.wait_for_timeout(400)
             chk("정산 끝" in await B.text_content(".owe"), "모두 확인 → 자동 정산 끝")
 
+            # 9-1) 도착 알림: C는 메일 알림 끔, B(주인)가 도착 알림 → A 화면에 전체 화면 알림
+            await C.click("#myBtn"); await C.wait_for_selector("#mailT")
+            chk("lee01@sangsin.com" in await C.text_content("#sheetBody"), "내 정보에 회사 메일 주소 표시")
+            await C.click("#mailT"); await C.wait_for_timeout(400)
+            chk(await C.get_attribute("#mailT", "aria-pressed") == "false", "메일 알림 끄기")
+            await C.keyboard.press("Escape")
+            await B.click("#arriveBtn"); await B.wait_for_selector("#amsg")
+            await B.fill("#amsg", "1층 로비 테이블"); await shot(B, "17a_arrive_sheet"); await B.click("#ago")
+            chk("메일 1통" in await toast(B), "도착 알림 → 메일 1통(A만)")
+            await A.reload(); await A.wait_for_selector("#arrive.on"); await A.wait_for_timeout(200); await shot(A, "17b_arrive_alert")
+            chk("1층 로비 테이블" in await A.text_content("#arriveBody"), "참여자에게 도착 전체 화면 알림")
+            await A.click("#arrOk"); await A.reload(); await A.wait_for_timeout(800)
+            chk(not await A.locator("#arrive.on").count(), "도착 알림은 한 번만")
+            await B.reload(); await B.wait_for_selector(".banner")
+            chk(await B.locator("#arriveBtn").count() == 0, "주인 화면: 도착 버튼 사라지고 배너")
+
             # 10) 리포트·명예의 전당
-            await C.goto(U + "#report"); await C.reload(); await C.wait_for_selector("#repCard"); await shot(C, "18_report")
+            await C.goto(U + "#report"); await C.reload(); await C.wait_for_selector("#arrive.on")
+            chk(True, "메일 알림 끈 참여자도 앱 알림은 받음"); await C.click("#arrOk")
+            await C.wait_for_selector("#repCard"); await shot(C, "18_report")
             chk("4잔" in await C.text_content(".rep") and "샷 추가" not in await C.text_content(".title-badge"), "C 리포트 4잔")
             await C.click("#repCard"); await C.wait_for_timeout(300); await shot(C, "19_report_card")
             await C.click("#closeCard")

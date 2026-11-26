@@ -8,6 +8,8 @@
  *  3. 아래 ADMIN_PIN에 관리자 PIN(6자 이상, 숫자·영문)을 넣고 저장합니다.
  *  4. [배포 → 새 배포 → 유형: 웹 앱] / 실행 사용자: 나 / 액세스 권한: 모든 사용자 → 배포
  *  5. 나온 웹 앱 URL(https://script.google.com/macros/s/…/exec)을 알려 주세요.
+ *  6. 도착 메일 알림용: 편집기 위 함수 목록에서 setup 을 골라 ▶ 실행 → 권한(메일 보내기 포함) 허용.
+ *     (권한이 늘어난 코드로 바꾼 뒤에는 이 실행을 한 번 해야 웹앱이 동작합니다)
  *  코드를 고친 뒤에는 [배포 → 배포 관리 → 수정(연필) → 버전: 새 버전]으로 올려야 URL이 유지됩니다.
  *
  * 탭(처음 호출 때 자동 생성)
@@ -25,10 +27,10 @@ const ADMIN_PIN = '';           // ← 관리자 PIN을 넣으세요 (6자 이�
 const TZ = 'Asia/Seoul';
 
 const T = {
-  members: { name: '회원', cols: ['신청시각', 'PORTAL ID', '이름', '상태', '키해시', '토스ID', '카카오페이링크', '처리시각'] },
+  members: { name: '회원', cols: ['신청시각', 'PORTAL ID', '이름', '상태', '키해시', '토스ID', '카카오페이링크', '처리시각', '메일알림'] },
   cafes:   { name: '카페', cols: ['카페', '최소주문', '안내'] },
   menu:    { name: '메뉴', cols: ['카페', '분류', '메뉴', '가격'] },
-  pots:    { name: '팟', cols: ['pid', '열린시각', '날짜', '카페', '주인', '주인PORTAL', '마감', '상태', '골든벨', '골든벨PORTAL', '골든벨송금', '한마디', '최소주문', '확정합계'] },
+  pots:    { name: '팟', cols: ['pid', '열린시각', '날짜', '카페', '주인', '주인PORTAL', '마감', '상태', '골든벨', '골든벨PORTAL', '골든벨송금', '한마디', '최소주문', '확정합계', '도착시각', '도착메모'] },
   orders:  { name: '주문', cols: ['oid', 'pid', '날짜', 'PORTAL', '이름', '주문내역', '잔수', '금액', '송금', '입금확인', '시각', 'items'] },
 };
 const DEFAULT_CAFES = [['더벤티 테크노폴리스점', 9900, '메뉴판에 없는 메뉴는 더벤티 앱에서 테크노폴리스점 가격을 확인해 직접 입력']];
@@ -53,8 +55,19 @@ function sheet_(k) {
     sh = ss.insertSheet(t.name); sh.appendRow(t.cols); sh.setFrozenRows(1);
     if (k === 'cafes') DEFAULT_CAFES.forEach(r => sh.appendRow(r));
     if (k === 'menu') DEFAULT_MENU.forEach(r => sh.appendRow(r));
+  } else if (!HDR_[k]) {   // 열이 추가된 버전이면 머리글을 채워 넣음
+    const h = sh.getRange(1, 1, 1, t.cols.length).getValues()[0];
+    if (t.cols.some((c, i) => String(h[i]) !== c)) sh.getRange(1, 1, 1, t.cols.length).setValues([t.cols]);
   }
+  HDR_[k] = 1;
   return sh;
+}
+const HDR_ = {};
+// 편집기에서 한 번 실행: 시트 탭 만들기 + 메일 권한 승인
+function setup() {
+  const r = ping_();
+  Logger.log(JSON.stringify(r) + ' / 오늘 남은 메일 ' + MailApp.getRemainingDailyQuota() + '통');
+  return r;
 }
 function txt_(v) { return v instanceof Date ? Utilities.formatDate(v, TZ, 'yyyy-MM-dd') : String(v == null ? '' : v).replace(/^'/, ''); }
 function rows_(k) {           // → [{_r: 행번호, 열이름: 값, …}]
@@ -123,7 +136,8 @@ function handle_(d) {
     const m = auth_(d.key);
     if (!m) return err_('auth');
     const f = { state: state_, pay: setPay_, open: open_, order: order_, bell: bell_, close: close_, extend: extend_,
-      cancel: cancelPot_, ordered: ordered_, sent: sent_, confirm: confirm_, finish: finish_, report: report_ }[a];
+      cancel: cancelPot_, ordered: ordered_, sent: sent_, confirm: confirm_, finish: finish_, report: report_,
+      arrive: arrive_, mail: setMail_ }[a];
     return f ? f(m, d) : err_('bad');
   } finally {
     lock.releaseLock();
@@ -139,7 +153,9 @@ function member_(key) {
 }
 function auth_(key) { const m = member_(key); return m && txt_(m['상태']) === '승인' ? m : null; }
 function pub_(m) {
-  return { status: txt_(m['상태']), name: txt_(m['이름']), toss: txt_(m['토스ID']), kakao: txt_(m['카카오페이링크']) };
+  // 본인에게만 돌려주는 정보(메일 주소 표시용으로 PORTAL ID 포함)
+  return { status: txt_(m['상태']), name: txt_(m['이름']), toss: txt_(m['토스ID']), kakao: txt_(m['카카오페이링크']),
+    mail: txt_(m['메일알림']) !== 'N', portal: txt_(m['PORTAL ID']) };
 }
 
 function join_(d) {
@@ -213,6 +229,7 @@ function view_(m, p, pays) {
     myItems: mine ? parseItems_(mine['items']) : [],
     owe: owe_(p, os, txt_(m['PORTAL ID'])),
     pay: { toss: payer.toss || '', kakao: payer.kakao || '' },
+    arrived: Number(p['도착시각']) || 0, arriveMsg: txt_(p['도착메모']),
   };
   if (bell && !same_({ 'PORTAL ID': txt_(p['주인PORTAL']) }, bell)) {
     v.bellPay = { name: txt_(p['골든벨']), sent: txt_(p['골든벨송금']) === 'Y', ok: txt_(p['골든벨송금']) === 'OK', amount: v.total };
@@ -383,6 +400,39 @@ function autoDone_(p) {   // 받을 돈이 모두 확인되면 자동으로 정�
   if (bell) done = bell.toLowerCase() === owner || txt_(p['골든벨송금']) === 'OK';
   else done = os.every(o => txt_(o['PORTAL']).toLowerCase() === owner || txt_(o['입금확인']) === 'Y');
   if (done) { p['상태'] = DONE; put_('pots', p); }
+}
+
+/* ---------- 도착 알림 ---------- */
+const MAIL_DOMAIN = '@sangsin.com';
+const APP_URL = 'https://imsean629.github.io/sangsinbrake-os/coffee/';
+function setMail_(m, d) {
+  m['메일알림'] = d.on === false ? 'N' : 'Y'; put_('members', m);
+  return { ok: true, me: pub_(m) };
+}
+// 주인: "도착했어요" → 앱(다음 새로고침 때 전체 화면 알림) + 참여자 회사 메일(메일알림 켠 사람)
+function arrive_(m, d) {
+  const [p, e] = ownPot_(m, d, [ORDERED, DONE]); if (e) return e;
+  if (Number(p['도착시각'])) return err_('arrived');
+  const msg = clean_(d.msg, 60) || txt_(p['한마디']);
+  p['도착시각'] = now_(); p['도착메모'] = msg; put_('pots', p);
+  const off = {}; rows_('members').forEach(r => { if (txt_(r['상태']) === '승인' && txt_(r['메일알림']) === 'N') off[txt_(r['PORTAL ID']).toLowerCase()] = 1; });
+  const owner = txt_(p['주인PORTAL']).toLowerCase(), sent = [];
+  let mailErr = '';
+  potOrders_(p['pid']).forEach(o => {
+    const portal = txt_(o['PORTAL']).toLowerCase();
+    if (portal === owner || off[portal] || sent.indexOf(portal) >= 0) return;
+    const items = parseItems_(o['items']).map(x => '· ' + x.n + (x.o ? ' (' + x.o + ')' : '') + (x.q > 1 ? ' ×' + x.q : '')).join('\n');
+    try {
+      MailApp.sendEmail({
+        to: portal + MAIL_DOMAIN, name: 'SB COFFEE RUN',
+        subject: '☕ 커피 도착! ' + txt_(p['주인']) + '님 팟' + (msg ? ' · ' + msg : ''),
+        body: txt_(p['주인']) + '님이 커피가 도착했다고 알렸어요.\n' + (msg ? '장소/메모: ' + msg + '\n' : '') + '\n내 주문\n' + items +
+          '\n\n앱에서 보기: ' + APP_URL + '#pot=' + txt_(p['pid']) + '\n\n이 알림은 SB COFFEE RUN 앱 → 내 정보에서 끌 수 있어요.',
+      });
+      sent.push(portal);
+    } catch (x) { mailErr = String(x && x.message || x); }
+  });
+  return Object.assign(state_(m), { mailed: sent.length, mailErr: mailErr });
 }
 
 /* ---------- 리포트·명예의 전당 (이번 달, 주문완료·정산완료 팟만) ---------- */

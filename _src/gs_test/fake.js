@@ -17,6 +17,9 @@ const cache = {};
 global.SpreadsheetApp = { getActiveSpreadsheet: () => book, openById: () => book };
 global.LockService = { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) };
 global.CacheService = { getScriptCache: () => ({ get: k => cache[k] || null, put: (k, v) => { cache[k] = v; } }) };
+global.MAILS = [];
+global.MailApp = { sendEmail: o => { if (/fail/.test(o.to)) throw new Error('bad address'); MAILS.push(o); }, getRemainingDailyQuota: () => 100 };
+global.Logger = { log() {} };
 global.ContentService = { MimeType: { JSON: 'json' }, createTextOutput: t => ({ t, setMimeType() { return this; }, getContent() { return this.t; } }) };
 global.Utilities = {
   DigestAlgorithm: { SHA_256: 'sha256' }, Charset: { UTF_8: 'utf8' },
