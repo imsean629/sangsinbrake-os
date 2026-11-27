@@ -247,7 +247,7 @@ function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('o
 function fail(r) { const m = (ERR[(r && r.error) || 'net'] || ERR.net) + (r && r.msg ? ' (' + r.msg + ')' : ''); toast(m); if (r && r.error === 'auth') { S.me = null; boot(); } }
 async function run(a, d, ok) {
   if (S.busy) return; S.busy = true;
-  try { const r = await api(a, d); if (r.ok === false) { if (r.error !== 'min') fail(r); return r; } if (r.pots) setState(r); if (ok) ok(r); return r; }
+  try { const r = await api(a, d); if (r.ok === false) { if (r.error === 'bad' && (a === 'arrive' || a === 'mail')) r.error = 'oldserver'; if (r.error !== 'min') fail(r); return r; } if (r.pots) setState(r); if (ok) ok(r); return r; }
   catch (e) { toast(ERR.net); console.error(e); } finally { S.busy = false; }
 }
 function setState(r) { S.st = r; S.me = r.me; S.offset = (r.now || Date.now()) - Date.now(); setTimeout(checkArrive, 0); }

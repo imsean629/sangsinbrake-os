@@ -138,7 +138,7 @@ function handle_(d) {
     const f = { state: state_, pay: setPay_, open: open_, order: order_, bell: bell_, close: close_, extend: extend_,
       cancel: cancelPot_, ordered: ordered_, sent: sent_, confirm: confirm_, finish: finish_, report: report_,
       arrive: arrive_, mail: setMail_ }[a];
-    return f ? f(m, d) : err_('bad');
+    return f ? f(m, d) : err_('oldserver');
   } finally {
     lock.releaseLock();
   }
